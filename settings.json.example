@@ -1,0 +1,37 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /path/to/mood-lifter-hooks/hooks/sessionstart.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /path/to/mood-lifter-hooks/hooks/stop.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /path/to/mood-lifter-hooks/hooks/notification.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
