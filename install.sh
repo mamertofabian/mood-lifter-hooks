@@ -1,88 +1,352 @@
 #!/bin/bash
 
 # Mood Lifter Hooks Installation Script
-# This script helps set up the hooks in your Claude Code configuration
+# Installs encouraging hooks and commands for Claude Code
 
 set -e
 
-echo "🚀 Mood Lifter Hooks Installation"
-echo "=================================="
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Installation paths
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+USER_CLAUDE_DIR="$HOME/.claude"
+USER_COMMANDS_DIR="$USER_CLAUDE_DIR/commands"
+USER_SETTINGS_FILE="$USER_CLAUDE_DIR/settings.json"
+
+# Default options
+INSTALL_HOOKS=true
+INSTALL_COMMANDS=true
+INSTALL_LOCATION="user"  # user or project
+PROJECT_DIR=""
+
+# Display usage
+usage() {
+    echo "Usage: $0 [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help           Show this help message"
+    echo "  -p, --project DIR    Install to specific project directory (default: user-level)"
+    echo "  --hooks-only         Install only hooks (no slash commands)"
+    echo "  --commands-only      Install only slash commands (no hooks)"
+    echo "  --no-ollama          Skip ollama availability check"
+    echo ""
+    echo "Examples:"
+    echo "  $0                           # Install everything at user level"
+    echo "  $0 --project /path/to/proj   # Install to specific project"
+    echo "  $0 --commands-only           # Install only slash commands"
+    exit 0
+}
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help)
+            usage
+            ;;
+        -p|--project)
+            INSTALL_LOCATION="project"
+            PROJECT_DIR="$2"
+            shift 2
+            ;;
+        --hooks-only)
+            INSTALL_COMMANDS=false
+            shift
+            ;;
+        --commands-only)
+            INSTALL_HOOKS=false
+            shift
+            ;;
+        --no-ollama)
+            SKIP_OLLAMA=true
+            shift
+            ;;
+        *)
+            echo -e "${RED}Unknown option: $1${NC}"
+            usage
+            ;;
+    esac
+done
+
+# Header
+echo -e "${BLUE}=======================================${NC}"
+echo -e "${BLUE}   Mood Lifter Hooks Installation${NC}"
+echo -e "${BLUE}=======================================${NC}"
 echo ""
 
-# Get the directory where this script is located
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-# Check if ollama is installed
-if command -v ollama &> /dev/null; then
-    echo "✅ Ollama detected - will use for dynamic message generation"
-    echo "   Available models:"
-    ollama list 2>/dev/null | grep -E "^(phi3.5|mistral|llama)" | head -5 || echo "   No suitable models found"
+# Determine installation directory
+if [ "$INSTALL_LOCATION" = "project" ]; then
+    if [ -z "$PROJECT_DIR" ]; then
+        PROJECT_DIR="$(pwd)"
+    fi
+    if [ ! -d "$PROJECT_DIR" ]; then
+        echo -e "${RED}Error: Project directory does not exist: $PROJECT_DIR${NC}"
+        exit 1
+    fi
+    CLAUDE_DIR="$PROJECT_DIR/.claude"
+    COMMANDS_DIR="$CLAUDE_DIR/commands"
+    SETTINGS_FILE="$CLAUDE_DIR/settings.json"
+    echo -e "${GREEN}Installing to project: $PROJECT_DIR${NC}"
 else
-    echo "ℹ️  Ollama not found - will use fallback messages"
-    echo "   To enable dynamic messages, install ollama: https://ollama.ai"
+    CLAUDE_DIR="$USER_CLAUDE_DIR"
+    COMMANDS_DIR="$USER_COMMANDS_DIR"
+    SETTINGS_FILE="$USER_SETTINGS_FILE"
+    echo -e "${GREEN}Installing to user directory: $HOME/.claude${NC}"
 fi
-echo ""
 
-# Make scripts executable
-echo "Setting up hook scripts..."
-chmod +x "$SCRIPT_DIR"/hooks/*.py
-chmod +x "$SCRIPT_DIR"/lib/*.py
-echo "✅ Scripts are now executable"
-echo ""
+# Create directories if they don't exist
+echo -e "${YELLOW}Creating directories...${NC}"
+mkdir -p "$CLAUDE_DIR"
+mkdir -p "$COMMANDS_DIR"
 
-# Show configuration instructions
-echo "📝 Configuration Instructions:"
-echo "------------------------------"
-echo ""
-echo "Add the following to your Claude Code settings file:"
-echo "(~/.claude/settings.json or .claude/settings.json in your project)"
-echo ""
-cat << EOF
-{
-  "hooks": {
+# Check for ollama (optional)
+if [ "$SKIP_OLLAMA" != true ]; then
+    echo -e "${YELLOW}Checking for ollama...${NC}"
+    if command -v ollama &> /dev/null; then
+        echo -e "${GREEN}✓ ollama is installed${NC}"
+        ollama list &> /dev/null && echo -e "${GREEN}✓ ollama is running${NC}" || echo -e "${YELLOW}⚠ ollama is installed but not running${NC}"
+    else
+        echo -e "${YELLOW}⚠ ollama not found - hooks will use fallback messages${NC}"
+    fi
+fi
+
+# Install Python scripts to user directory (always, for global access)
+if [ "$INSTALL_COMMANDS" = true ] || [ "$INSTALL_HOOKS" = true ]; then
+    echo -e "${YELLOW}Installing Python scripts...${NC}"
+    
+    # Copy core library files
+    cp "$SCRIPT_DIR/lib/message_generator.py" "$USER_CLAUDE_DIR/" 2>/dev/null || true
+    cp "$SCRIPT_DIR/lib/joke_command.py" "$USER_CLAUDE_DIR/" 2>/dev/null || true
+    cp "$SCRIPT_DIR/lib/jw_text_command.py" "$USER_CLAUDE_DIR/" 2>/dev/null || true
+    
+    # Make scripts executable
+    chmod +x "$USER_CLAUDE_DIR"/*.py 2>/dev/null || true
+    
+    echo -e "${GREEN}✓ Python scripts installed${NC}"
+fi
+
+# Install slash commands
+if [ "$INSTALL_COMMANDS" = true ]; then
+    echo -e "${YELLOW}Installing slash commands...${NC}"
+    
+    # Create joke command
+    cat > "$COMMANDS_DIR/joke.md" << 'EOF'
+---
+description: Generate a random developer joke
+allowed-tools: Bash(python3:*)
+---
+
+## Generate Random Developer Joke
+
+!`python3 $CLAUDE_PROJECT_DIR/lib/joke_command.py 2>/dev/null || python3 ~/.claude/joke_command.py 2>/dev/null || echo "Script not found. Please run the mood-lifter-hooks installer."`
+
+---
+
+*Displays a random programming joke to brighten your coding session! Uses ollama for creative jokes when available, with quality fallbacks.*
+EOF
+    
+    # Create JW text command
+    cat > "$COMMANDS_DIR/jwtext.md" << 'EOF'
+---
+description: Display today's JW daily text with developer encouragement
+allowed-tools: Bash(python3:*)
+---
+
+## JW Daily Text with Developer Encouragement
+
+!`python3 $CLAUDE_PROJECT_DIR/lib/jw_text_command.py 2>/dev/null || python3 ~/.claude/jw_text_command.py 2>/dev/null || echo "Script not found. Please run the mood-lifter-hooks installer."`
+
+---
+
+*Fetches today's daily text from JW.org and provides developer-focused encouragement based on the scripture. If online fetch fails, it uses inspiring fallback texts.*
+EOF
+    
+    echo -e "${GREEN}✓ Slash commands installed (/joke, /jwtext)${NC}"
+fi
+
+# Install hooks
+if [ "$INSTALL_HOOKS" = true ]; then
+    echo -e "${YELLOW}Installing hooks configuration...${NC}"
+    
+    # Create hook scripts directory
+    HOOKS_DIR="$CLAUDE_DIR/hooks"
+    mkdir -p "$HOOKS_DIR"
+    
+    # Create hook scripts
+    cat > "$HOOKS_DIR/sessionstart.py" << 'EOF'
+#!/usr/bin/env python3
+import json
+import sys
+import os
+sys.path.insert(0, os.path.expanduser('~/.claude'))
+from message_generator import generate_message
+
+try:
+    input_data = json.load(sys.stdin)
+    message = generate_message('start')
+    print(message)
+    # Suppress output from context for SessionStart
+    output = {"suppressOutput": True}
+    print(json.dumps(output))
+except Exception:
+    pass
+EOF
+    
+    cat > "$HOOKS_DIR/stop.py" << 'EOF'
+#!/usr/bin/env python3
+import json
+import sys
+import os
+sys.path.insert(0, os.path.expanduser('~/.claude'))
+from message_generator import generate_message
+
+try:
+    input_data = json.load(sys.stdin)
+    print("\n" + generate_message('stop'))
+except Exception:
+    pass
+EOF
+    
+    cat > "$HOOKS_DIR/notification.py" << 'EOF'
+#!/usr/bin/env python3
+import json
+import sys
+import os
+sys.path.insert(0, os.path.expanduser('~/.claude'))
+from message_generator import generate_message
+
+try:
+    input_data = json.load(sys.stdin)
+    print("\n" + generate_message('notification'))
+except Exception:
+    pass
+EOF
+    
+    # Make hook scripts executable
+    chmod +x "$HOOKS_DIR"/*.py
+    
+    # Update settings.json
+    if [ -f "$SETTINGS_FILE" ]; then
+        echo -e "${YELLOW}Backing up existing settings.json...${NC}"
+        cp "$SETTINGS_FILE" "$SETTINGS_FILE.backup.$(date +%Y%m%d_%H%M%S)"
+    fi
+    
+    # Create or update settings.json with Python for proper JSON handling
+    python3 << EOF
+import json
+import os
+
+settings_file = "$SETTINGS_FILE"
+hooks_dir = "$HOOKS_DIR"
+
+# Load existing settings or create new
+if os.path.exists(settings_file):
+    with open(settings_file, 'r') as f:
+        settings = json.load(f)
+else:
+    settings = {}
+
+# Ensure hooks section exists
+if 'hooks' not in settings:
+    settings['hooks'] = {}
+
+# Add our hooks (preserve existing ones)
+mood_lifter_hooks = {
     "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 $SCRIPT_DIR/hooks/sessionstart.py",
-            "timeout": 10
-          }
-        ]
-      }
+        {
+            "matcher": "*",
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": f"python3 {hooks_dir}/sessionstart.py"
+                }
+            ]
+        }
     ],
     "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 $SCRIPT_DIR/hooks/stop.py",
-            "timeout": 10
-          }
-        ]
-      }
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": f"python3 {hooks_dir}/stop.py"
+                }
+            ]
+        }
     ],
     "Notification": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 $SCRIPT_DIR/hooks/notification.py",
-            "timeout": 10
-          }
-        ]
-      }
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": f"python3 {hooks_dir}/notification.py"
+                }
+            ]
+        }
     ]
-  }
 }
-EOF
 
+# Merge hooks (add if not exists, skip if exists)
+for event, hooks in mood_lifter_hooks.items():
+    if event not in settings['hooks']:
+        settings['hooks'][event] = hooks
+    else:
+        # Check if our hook already exists
+        our_command = hooks[0]['hooks'][0]['command']
+        exists = False
+        for existing_hook in settings['hooks'][event]:
+            if 'hooks' in existing_hook:
+                for h in existing_hook['hooks']:
+                    if h.get('command') == our_command:
+                        exists = True
+                        break
+        if not exists:
+            settings['hooks'][event].extend(hooks)
+
+# Save settings
+with open(settings_file, 'w') as f:
+    json.dump(settings, f, indent=2)
+
+print("✓ Hooks configuration updated")
+EOF
+    
+    echo -e "${GREEN}✓ Hooks installed (SessionStart, Stop, Notification)${NC}"
+fi
+
+# Copy message_generator.py if hooks were installed
+if [ "$INSTALL_HOOKS" = true ]; then
+    if [ ! -f "$USER_CLAUDE_DIR/message_generator.py" ]; then
+        echo -e "${YELLOW}Installing message generator...${NC}"
+        cp "$SCRIPT_DIR/lib/message_generator.py" "$USER_CLAUDE_DIR/"
+        echo -e "${GREEN}✓ Message generator installed${NC}"
+    fi
+fi
+
+# Success message
 echo ""
-echo "💡 Tips:"
-echo "  - Project settings (.claude/settings.json) override user settings"
-echo "  - Use .claude/settings.local.json for local-only configuration"
-echo "  - Restart Claude Code after changing settings"
-echo "  - Messages won't clutter your conversation context"
+echo -e "${GREEN}=======================================${NC}"
+echo -e "${GREEN}   Installation Complete! 🎉${NC}"
+echo -e "${GREEN}=======================================${NC}"
 echo ""
-echo "🎉 Installation complete!"
-echo "   Your next coding session will be more uplifting! 🌟"
+
+if [ "$INSTALL_COMMANDS" = true ]; then
+    echo -e "${BLUE}Slash commands available:${NC}"
+    echo "  • /joke    - Display a random developer joke"
+    echo "  • /jwtext  - Show today's JW daily text with encouragement"
+    echo ""
+fi
+
+if [ "$INSTALL_HOOKS" = true ]; then
+    echo -e "${BLUE}Hooks installed:${NC}"
+    echo "  • SessionStart - Encouraging message when starting Claude Code"
+    echo "  • Stop - Uplifting message when Claude finishes a task"
+    echo "  • Notification - Motivational message during notifications"
+    echo ""
+fi
+
+echo -e "${YELLOW}Note: Restart Claude Code for hooks to take effect${NC}"
+echo ""
+echo -e "${GREEN}Enjoy your mood-lifted coding sessions! 😊${NC}"

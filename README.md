@@ -1,261 +1,262 @@
 # Mood Lifter Hooks 🌟
 
-A collection of Claude Code Hooks designed to add encouraging and uplifting messages during your coding sessions. These hooks provide positive reinforcement at key moments without cluttering your conversation context.
+Encouraging hooks and commands for Claude Code that brighten your coding sessions with uplifting messages, developer jokes, and daily wisdom.
 
-## ✨ What are Mood Lifter Hooks?
+## ✨ Features
 
-Mood Lifter Hooks are specialized Claude Code Hooks that automatically display encouraging messages during three important events:
+### 🎣 Hooks
+- **SessionStart** - Motivational messages when starting Claude Code
+- **Stop** - Encouragement when Claude finishes tasks
+- **Notification** - Uplifting messages during notifications
 
-- **SessionStart** - Kick off your coding session with motivation
-- **Stop** - Get encouragement when wrapping up your work
-- **Notification** - Receive uplifting messages during your session
+### 🎯 Slash Commands
+- `/joke` - Display random developer jokes
+- `/jwtext` - Show today's JW daily text with developer encouragement
 
-## 🎯 Key Features
+All messages are displayed without cluttering your conversation context!
 
-- **Non-intrusive**: Messages are displayed to users without cluttering Claude's conversation context
-- **Contextual**: Different encouraging messages for different session events
-- **Customizable**: Easy to modify messages and add your own encouragement
-- **Lightweight**: Minimal performance impact on your coding workflow
+## 🚀 Quick Install
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Python 3.8 or higher
-- Claude Code with hooks support
-- (Optional) [ollama](https://ollama.ai) for dynamic message generation
-- (Optional) [uv](https://github.com/astral-sh/uv) for faster Python package management
-
-### Installation
-
-#### Quick Install
+### Install to Any Repository
 
 ```bash
-# Clone the repository
+# Clone this repository
 git clone https://github.com/your-org/mood-lifter-hooks.git
 cd mood-lifter-hooks
 
-# Run the installation script
+# Install globally (user-level)
+./install.sh
+
+# Install to specific project
+./install.sh --project /path/to/your/project
+
+# Install only commands (no hooks)
+./install.sh --commands-only
+
+# Install only hooks (no commands)
+./install.sh --hooks-only
+```
+
+### Installation Options
+
+| Option | Description |
+|--------|------------|
+| `--help` | Show help message |
+| `--project DIR` | Install to specific project directory |
+| `--hooks-only` | Install only hooks (no slash commands) |
+| `--commands-only` | Install only slash commands (no hooks) |
+| `--no-ollama` | Skip ollama availability check |
+
+## 📦 What Gets Installed
+
+### User-Level Installation (Default)
+```
+~/.claude/
+├── settings.json          # Updated with hook configurations
+├── commands/
+│   ├── joke.md           # /joke command
+│   └── jwtext.md         # /jwtext command
+├── hooks/
+│   ├── sessionstart.py   # SessionStart hook
+│   ├── stop.py          # Stop hook
+│   └── notification.py   # Notification hook
+├── message_generator.py  # Core message generation
+├── joke_command.py      # Joke generator script
+└── jw_text_command.py   # JW daily text script
+```
+
+### Project-Level Installation
+```
+/your/project/.claude/
+├── settings.json        # Project-specific hook configurations
+├── commands/           # Project-specific commands
+└── hooks/             # Project-specific hook scripts
+```
+
+## 🔄 Uninstall
+
+```bash
+# Remove user-level installation
+./uninstall.sh
+
+# Remove from specific project
+./uninstall.sh --project /path/to/project
+
+# Complete removal (including Python scripts)
+./uninstall.sh --complete
+
+# Remove only hooks
+./uninstall.sh --hooks-only
+
+# Remove only commands
+./uninstall.sh --commands-only
+```
+
+## 💡 How It Works
+
+### Context-Free Messages
+- **SessionStart hooks** use `suppressOutput: true` to prevent context addition
+- **Slash commands** use bash execution (`!`) which doesn't add to context
+- **Stop/Notification hooks** output directly without context impact
+
+### Dynamic Message Generation
+- Uses **ollama** for AI-generated encouragement when available
+- Falls back to curated messages if ollama is unavailable
+- Supports multiple lightweight models (phi3.5, mistral, llama3.2)
+
+## 🎮 Using the Commands
+
+### Developer Jokes
+```
+/joke
+```
+Displays a random programming joke using ollama or fallback jokes.
+
+### JW Daily Text
+```
+/jwtext
+```
+Shows today's scripture with developer-focused encouragement.
+
+## 🔧 Advanced Installation
+
+### Install from GitHub directly
+```bash
+# One-liner installation
+curl -sSL https://raw.githubusercontent.com/your-org/mood-lifter-hooks/main/install.sh | bash
+```
+
+### Custom Installation Path
+```bash
+# Clone to custom location
+git clone https://github.com/your-org/mood-lifter-hooks.git ~/my-tools/mood-lifter
+
+# Install from custom location
+cd ~/my-tools/mood-lifter
 ./install.sh
 ```
 
-#### Manual Installation
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/your-org/mood-lifter-hooks.git
-   cd mood-lifter-hooks
-   ```
-
-2. **Install dependencies (optional - only needed for future features):**
-   
-   Using uv (recommended):
-   ```bash
-   uv pip install -e .
-   # For development
-   uv pip install -e ".[dev]"
-   ```
-   
-   Using pip:
-   ```bash
-   pip install -r requirements.txt
-   # For development
-   pip install -r requirements-dev.txt
-   ```
-
-3. **Configure Claude Code:**
-   
-   Add to your `~/.claude/settings.json` or project's `.claude/settings.json`:
-   ```json
-   {
-     "hooks": {
-       "SessionStart": [{
-         "hooks": [{
-           "type": "command",
-           "command": "python3 /path/to/mood-lifter-hooks/hooks/sessionstart.py"
-         }]
-       }],
-       "Stop": [{
-         "hooks": [{
-           "type": "command",
-           "command": "python3 /path/to/mood-lifter-hooks/hooks/stop.py"
-         }]
-       }],
-       "Notification": [{
-         "hooks": [{
-           "type": "command",
-           "command": "python3 /path/to/mood-lifter-hooks/hooks/notification.py"
-         }]
-       }]
-     }
-   }
-   ```
-
-4. **Install ollama (optional but recommended):**
-   ```bash
-   # Install ollama from https://ollama.ai
-   # Pull a lightweight model
-   ollama pull phi3.5:3.8b
-   ```
-
-## 📖 Usage
-
-### SessionStart Hook
-
-Triggers when you begin a new coding session. The hook script generates encouraging messages using ollama and returns them without adding to Claude's context:
-
-```python
-# Example output from SessionStart hook
-{
-  "suppressOutput": true,
-  "systemMessage": "🚀 Ready to code something amazing! You've got this!"
-}
+### Multiple Project Setup
+```bash
+# Install to multiple projects
+for project in ~/projects/*; do
+    ./install.sh --project "$project"
+done
 ```
 
-### Stop Hook
+## 🎨 Customization
 
-Activates when Claude finishes responding. The hook displays an encouraging message that appears in transcript mode without affecting the conversation:
+### Modify Messages
+Edit `lib/message_generator.py` to customize:
+- Start messages
+- Stop messages
+- Notification messages
+- Fallback messages
 
-```python
-# Hook simply outputs to stdout
-print("🎉 Great work today! Your code is looking fantastic!")
+### Add New Commands
+Create new commands in `~/.claude/commands/`:
+```markdown
+---
+description: Your custom command
+allowed-tools: Bash(python3:*)
+---
+
+!`python3 ~/.claude/your_script.py`
 ```
 
-### Notification Hook
-
-Provides encouragement when Claude sends notifications. Messages are shown to the user but not added to Claude's context:
-
+### Configure Ollama Models
+Edit scripts to prefer different models:
 ```python
-# Hook outputs encouraging message
-print("💪 Keep going! Every line of code brings you closer to your goal!")
+preferred_models = ['gemma2:2b', 'phi3.5:3.8b', 'your-model:tag']
 ```
 
-## 🔧 Customization
+## 🚦 Prerequisites
 
-### Adding Your Own Messages
+### Required
+- Python 3.6+
+- Claude Code with hooks support
 
-You can easily customize the encouraging messages by editing the hook configurations. Consider:
+### Optional but Recommended
+- [ollama](https://ollama.ai) - For dynamic message generation
+  ```bash
+  # Install ollama
+  curl -sSL https://ollama.ai/install.sh | bash
+  
+  # Pull lightweight model
+  ollama pull phi3.5:3.8b
+  ```
 
-- **Personal motivation**: What keeps you inspired?
-- **Project-specific**: Tailor messages to your current work
-- **Time-based**: Different encouragement for morning vs. evening sessions
+## 🐛 Troubleshooting
 
-### Message Examples
+### Hooks Not Working?
+1. Restart Claude Code after installation
+2. Check settings.json was updated correctly
+3. Verify Python scripts are executable
+4. Run with `--debug` flag to see hook execution
 
-- "🌟 Your creativity is limitless!"
-- "💡 Every bug you fix makes you a better developer"
-- "🚀 Innovation happens one commit at a time"
-- "🎯 Focus on progress, not perfection"
-- "✨ You're building something amazing"
+### Commands Not Found?
+1. Check `~/.claude/commands/` directory exists
+2. Verify command files have `.md` extension
+3. Restart Claude Code
+4. Try `/help` to see available commands
 
-## 🎨 Hook Configuration
+### Ollama Issues?
+1. Ensure ollama is running: `ollama serve`
+2. Check model is downloaded: `ollama list`
+3. Scripts will use fallback messages if ollama fails
 
-Each hook follows the standard Claude Code Hooks format:
+## 📝 Manual Configuration
+
+If automatic installation fails, add to your `~/.claude/settings.json`:
 
 ```json
 {
   "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python /path/to/mood-lifter/hooks/sessionstart.py"
-          }
-        ]
-      }
-    ]
+    "SessionStart": [{
+      "matcher": "*",
+      "hooks": [{
+        "type": "command",
+        "command": "python3 ~/.claude/hooks/sessionstart.py"
+      }]
+    }],
+    "Stop": [{
+      "hooks": [{
+        "type": "command",
+        "command": "python3 ~/.claude/hooks/stop.py"
+      }]
+    }],
+    "Notification": [{
+      "hooks": [{
+        "type": "command",
+        "command": "python3 ~/.claude/hooks/notification.py"
+      }]
+    }]
   }
 }
 ```
 
-The hooks use JSON output with `suppressOutput: true` for SessionStart and standard output for Stop/Notification events to ensure messages are shown to users without cluttering Claude's conversation context.
-
-## 🛠️ Development
-
-### Setting Up Development Environment
-
-Using uv:
-```bash
-uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv pip install -e ".[dev]"
-```
-
-Using pip:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements-dev.txt
-```
-
-### Running Tests
-
-```bash
-pytest
-```
-
-### Code Formatting
-
-```bash
-# Format code
-black hooks/ lib/
-
-# Lint code  
-ruff check hooks/ lib/
-```
-
 ## 🤝 Contributing
 
-We welcome contributions to make Mood Lifter Hooks even better!
-
-### How to Contribute
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests and ensure code quality
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
-
-### Ideas for Contributions
-
-- New encouraging message categories
+We welcome contributions! Ideas:
+- New message categories
 - Multi-language support
-- Integration with external APIs (dad jokes, dev quotes)
-- Custom message scheduling based on time zones
-- User preference management
-- Additional ollama model support
-- JW daily text integration
-
-## 📚 Resources
-
-- [Claude Code Hooks Documentation](https://docs.anthropic.com/claude/docs/code-hooks)
-- [Claude Code Hooks Guide](https://docs.anthropic.com/claude/docs/code-hooks-guide)
-- [Community Examples](https://github.com/your-org/mood-lifter-hooks/discussions)
-
-## 🎯 Why Mood Lifter Hooks?
-
-Coding can be challenging, and sometimes we all need a little boost of encouragement. These hooks are designed to:
-
-- **Boost motivation** during long coding sessions
-- **Celebrate progress** and achievements
-- **Maintain positive mindset** when debugging
-- **Create a supportive environment** for learning and development
+- Additional API integrations
+- Custom scheduling
+- More ollama models
+- Theme-based messages
 
 ## 📄 License
 
-This project is open source and available under the [MIT License](LICENSE).
+MIT License - See [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- Inspired by the Claude Code Hooks community
-- Built with positivity and encouragement in mind
-- Special thanks to all contributors and users
+- Claude Code Hooks community
+- Ollama for AI message generation
+- All contributors and users
 
 ---
 
-**Ready to lift your coding mood?** 🚀
+**Ready to brighten your coding sessions?** 🚀
 
-Start using Mood Lifter Hooks today and transform your coding sessions into uplifting experiences!
+Install Mood Lifter Hooks today and code with encouragement!
