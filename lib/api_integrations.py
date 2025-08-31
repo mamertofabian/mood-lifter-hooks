@@ -32,9 +32,9 @@ class APIClient:
     def __init__(
         self, 
         base_url: Optional[str] = None,
-        timeout: int = 10,
-        max_retries: int = 3,
-        cache_ttl_minutes: int = 15
+        timeout: int = 3,  # Reduced from 10 to 3 seconds
+        max_retries: int = 1,  # Reduced from 3 to 1 - fail fast
+        cache_ttl_minutes: int = 30  # Increased cache to reduce API calls
     ):
         """
         Initialize API client.

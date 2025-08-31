@@ -31,7 +31,8 @@ class JWDailyTextClient:
         """
         self.api_client = APIClient(
             base_url=None,
-            cache_ttl_minutes=cache_ttl_hours * 60
+            cache_ttl_minutes=cache_ttl_hours * 60,
+            timeout=3  # Fast timeout for better UX
         )
     
     def _build_url(self, date: Optional[datetime] = None) -> str:
@@ -198,7 +199,7 @@ Maximum 20 words. Include one appropriate emoji. Focus on practical encouragemen
                 input=prompt,
                 text=True,
                 capture_output=True,
-                timeout=8  # Slightly longer timeout for more complex generation
+                timeout=3  # Keep it fast - better to fail than delay
             )
             
             if result.returncode == 0 and result.stdout:

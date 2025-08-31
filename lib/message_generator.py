@@ -154,7 +154,7 @@ def generate_with_ollama(event_type: str, model: Optional[str] = None, use_varie
             input=prompt,
             text=True,
             capture_output=True,
-            timeout=5  # 5 second timeout
+            timeout=3  # 3 second timeout - fail fast
         )
         
         if result.returncode == 0 and result.stdout:

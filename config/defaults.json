@@ -11,7 +11,7 @@
         "gemma2:2b",
         "qwen2.5:0.5b"
       ],
-      "timeout": 5,
+      "timeout": 3,
       "fallback_to_default": true
     },
     "message_sources": {
@@ -30,7 +30,7 @@
       "external_apis": {
         "enabled": true,
         "cache_minutes": 60,
-        "timeout": 10,
+        "timeout": 2,
         "sources": {
           "dad_jokes": true,
           "programming_quotes": true,

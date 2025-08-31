@@ -21,12 +21,15 @@ class JokeQuoteClient:
     
     def __init__(self):
         """Initialize the joke/quote client."""
-        self.api_client = APIClient(cache_ttl_minutes=60)
+        self.api_client = APIClient(cache_ttl_minutes=60, timeout=2)  # Fast timeout for jokes
         
         # Public APIs that don't require authentication
         self.dad_joke_api = "https://icanhazdadjoke.com/"
         self.quote_api = "https://api.quotable.io/random"
-        self.programming_quotes_api = "https://programming-quotes-api.herokuapp.com/quotes/random"
+        # Better programming joke APIs (Heroku one is often down)
+        self.programming_joke_api = "https://v2.jokeapi.dev/joke/Programming"
+        self.official_joke_api = "https://official-joke-api.appspot.com/jokes/programming/random"
+        self.typefit_quotes_api = "https://type.fit/api/quotes"
     
     def get_dad_joke(self) -> Optional[str]:
         """
@@ -43,31 +46,44 @@ class JokeQuoteClient:
         
         return None
     
-    def get_programming_quote(self) -> Optional[Dict[str, str]]:
+    def get_programming_joke(self) -> Optional[str]:
         """
-        Fetch a programming quote.
+        Fetch a programming joke from multiple sources.
         
         Returns:
-            Dictionary with 'text' and 'author' or None on error
+            Joke text or None on error
         """
-        data = self.api_client.get(self.programming_quotes_api)
-        
+        # Try JokeAPI first (best quality)
+        data = self.api_client.get(self.programming_joke_api + "?safe-mode")
         if data and isinstance(data, dict):
-            return {
-                "text": data.get("en", ""),
-                "author": data.get("author", "Unknown")
-            }
+            if data.get("type") == "single":
+                return data.get("joke", "")
+            elif data.get("type") == "twopart":
+                setup = data.get("setup", "")
+                delivery = data.get("delivery", "")
+                if setup and delivery:
+                    return f"{setup} {delivery}"
+        
+        # Fallback to Official Joke API
+        data = self.api_client.get(self.official_joke_api)
+        if data and isinstance(data, list) and len(data) > 0:
+            joke = data[0]
+            if isinstance(joke, dict):
+                setup = joke.get("setup", "")
+                punchline = joke.get("punchline", "")
+                if setup and punchline:
+                    return f"{setup} {punchline}"
         
         return None
     
     def get_inspirational_quote(self) -> Optional[Dict[str, str]]:
         """
-        Fetch an inspirational quote.
+        Fetch an inspirational quote with fallback.
         
         Returns:
             Dictionary with 'text' and 'author' or None on error
         """
-        # Add programming-related tags for better relevance
+        # Try Quotable.io first
         params = {"tags": "technology|success|motivational|inspirational", "maxLength": 150}
         data = self.api_client.get(self.quote_api, params=params)
         
@@ -76,6 +92,18 @@ class JokeQuoteClient:
                 "text": data.get("content", ""),
                 "author": data.get("author", "Unknown")
             }
+        
+        # Fallback to Type.fit quotes
+        data = self.api_client.get(self.typefit_quotes_api)
+        if data and isinstance(data, list) and len(data) > 0:
+            # Get a random quote
+            import random
+            quote = random.choice(data[:50])  # Use first 50 to avoid too much randomness
+            if isinstance(quote, dict):
+                return {
+                    "text": quote.get("text", ""),
+                    "author": quote.get("author", "Unknown")
+                }
         
         return None
     
@@ -105,11 +133,11 @@ class JokeQuoteClient:
             Dictionary with 'content', 'type', and optionally 'author'
         """
         if content_type == "joke":
-            sources = ["dad_joke", "chuck_norris"]
+            sources = ["dad_joke", "programming_joke", "chuck_norris"]
         elif content_type == "quote":
-            sources = ["programming_quote", "inspirational_quote"]
+            sources = ["inspirational_quote"]
         else:
-            sources = ["dad_joke", "programming_quote", "inspirational_quote", "chuck_norris"]
+            sources = ["dad_joke", "programming_joke", "inspirational_quote", "chuck_norris"]
         
         # Try sources in random order
         random.shuffle(sources)
@@ -121,20 +149,15 @@ class JokeQuoteClient:
                     if joke:
                         return {"content": joke, "type": "joke", "source": "Dad Joke"}
                 
+                elif source == "programming_joke":
+                    joke = self.get_programming_joke()
+                    if joke:
+                        return {"content": joke, "type": "joke", "source": "Programming Joke"}
+                
                 elif source == "chuck_norris":
                     joke = self.get_chuck_norris_joke()
                     if joke:
                         return {"content": joke, "type": "joke", "source": "Chuck Norris"}
-                
-                elif source == "programming_quote":
-                    quote = self.get_programming_quote()
-                    if quote and quote["text"]:
-                        return {
-                            "content": quote["text"],
-                            "author": quote["author"],
-                            "type": "quote",
-                            "source": "Programming Quote"
-                        }
                 
                 elif source == "inspirational_quote":
                     quote = self.get_inspirational_quote()
@@ -192,7 +215,7 @@ Maximum 20 words. Include one emoji. Make it practical and motivating."""
             input=prompt,
             text=True,
             capture_output=True,
-            timeout=6
+            timeout=3  # Reduced for better UX
         )
         
         if result.returncode == 0 and result.stdout:
@@ -252,6 +275,11 @@ FALLBACK_JOKES = [
     "Why did the developer quit? Because they didn't get arrays! 💰",
     "How many programmers does it take to change a light bulb? None, it's a hardware problem! 💡",
     "Why do Java developers wear glasses? Because they can't C#! 👓",
+    "There are only 10 types of people: those who understand binary and those who don't! 🤓",
+    "Why did the programmer go broke? Because he used up all his cache! 💸",
+    "What's a programmer's favorite hangout place? The Foo Bar! 🍻",
+    "Why was the JavaScript developer sad? Because they didn't Node how to Express themselves! 😢",
+    "How do you comfort a JavaScript bug? You console it! 🎮",
 ]
 
 FALLBACK_QUOTES = [

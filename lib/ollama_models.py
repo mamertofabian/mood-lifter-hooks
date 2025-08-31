@@ -226,7 +226,7 @@ def generate_with_model(
     prompt: str,
     model: Optional[str] = None,
     manager: Optional[OllamaModelManager] = None,
-    timeout: int = 5
+    timeout: int = 3
 ) -> Optional[str]:
     """
     Generate text using ollama with model selection.
