@@ -24,8 +24,10 @@ classifiers = [
 ]
 
 dependencies = [
-    # No external dependencies required for basic functionality
-    # ollama is called via subprocess
+    "requests>=2.28.0",         # For external API integration
+    "beautifulsoup4>=4.11.0",   # For web scraping (JW daily text)
+    "python-dateutil>=2.8.0",   # For date handling
+    "pyyaml>=6.0",              # For YAML configuration support
 ]
 
 [project.optional-dependencies]

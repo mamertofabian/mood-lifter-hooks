@@ -1,0 +1,89 @@
+{
+  "mood_lifter_hooks": {
+    "enabled": true,
+    "ollama": {
+      "enabled": true,
+      "use_variety": true,
+      "preferred_models": [
+        "phi3.5:3.8b",
+        "mistral:7b-instruct",
+        "llama3.2:1b",
+        "gemma2:2b",
+        "qwen2.5:0.5b"
+      ],
+      "timeout": 5,
+      "fallback_to_default": true
+    },
+    "message_sources": {
+      "weights": {
+        "default": 40,
+        "jw": 20,
+        "joke": 20,
+        "quote": 20
+      },
+      "jw": {
+        "enabled": true,
+        "cache_hours": 24,
+        "use_past_dates": true,
+        "past_days_range": 14
+      },
+      "external_apis": {
+        "enabled": true,
+        "cache_minutes": 60,
+        "timeout": 10,
+        "sources": {
+          "dad_jokes": true,
+          "programming_quotes": true,
+          "inspirational_quotes": true,
+          "chuck_norris": true
+        }
+      }
+    },
+    "time_preferences": {
+      "morning": {
+        "hours": [5, 12],
+        "message_style": "energizing",
+        "prefer_sources": ["default", "jw", "quote"]
+      },
+      "afternoon": {
+        "hours": [12, 17],
+        "message_style": "motivating",
+        "prefer_sources": ["default", "joke", "quote"]
+      },
+      "evening": {
+        "hours": [17, 24, 0, 5],
+        "message_style": "supportive",
+        "prefer_sources": ["default", "jw", "joke"]
+      }
+    },
+    "events": {
+      "SessionStart": {
+        "enabled": true,
+        "probability": 1.0,
+        "use_time_preferences": true
+      },
+      "Stop": {
+        "enabled": true,
+        "probability": 0.8,
+        "use_time_preferences": false,
+        "message_style": "congratulatory"
+      },
+      "Notification": {
+        "enabled": true,
+        "probability": 0.5,
+        "use_time_preferences": false,
+        "message_style": "encouraging"
+      }
+    },
+    "display": {
+      "max_length": 120,
+      "include_emojis": true,
+      "suppress_errors": true
+    },
+    "debug": {
+      "enabled": false,
+      "log_file": null,
+      "verbose": false
+    }
+  }
+}

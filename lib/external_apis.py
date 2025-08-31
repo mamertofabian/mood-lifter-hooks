@@ -1,0 +1,338 @@
+#!/usr/bin/env python3
+"""
+External API integrations for jokes and quotes.
+Provides dad jokes, developer quotes, and programming wisdom.
+"""
+
+import random
+import subprocess
+import sys
+import os
+from typing import Optional, List, Dict
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from lib.api_integrations import APIClient
+
+
+class JokeQuoteClient:
+    """Client for fetching jokes and quotes from various APIs."""
+    
+    def __init__(self):
+        """Initialize the joke/quote client."""
+        self.api_client = APIClient(cache_ttl_minutes=60)
+        
+        # Public APIs that don't require authentication
+        self.dad_joke_api = "https://icanhazdadjoke.com/"
+        self.quote_api = "https://api.quotable.io/random"
+        self.programming_quotes_api = "https://programming-quotes-api.herokuapp.com/quotes/random"
+    
+    def get_dad_joke(self) -> Optional[str]:
+        """
+        Fetch a dad joke from icanhazdadjoke API.
+        
+        Returns:
+            Dad joke text or None on error
+        """
+        headers = {"Accept": "application/json"}
+        data = self.api_client.get(self.dad_joke_api, headers=headers)
+        
+        if data and isinstance(data, dict):
+            return data.get("joke", "")
+        
+        return None
+    
+    def get_programming_quote(self) -> Optional[Dict[str, str]]:
+        """
+        Fetch a programming quote.
+        
+        Returns:
+            Dictionary with 'text' and 'author' or None on error
+        """
+        data = self.api_client.get(self.programming_quotes_api)
+        
+        if data and isinstance(data, dict):
+            return {
+                "text": data.get("en", ""),
+                "author": data.get("author", "Unknown")
+            }
+        
+        return None
+    
+    def get_inspirational_quote(self) -> Optional[Dict[str, str]]:
+        """
+        Fetch an inspirational quote.
+        
+        Returns:
+            Dictionary with 'text' and 'author' or None on error
+        """
+        # Add programming-related tags for better relevance
+        params = {"tags": "technology|success|motivational|inspirational", "maxLength": 150}
+        data = self.api_client.get(self.quote_api, params=params)
+        
+        if data and isinstance(data, dict):
+            return {
+                "text": data.get("content", ""),
+                "author": data.get("author", "Unknown")
+            }
+        
+        return None
+    
+    def get_chuck_norris_joke(self) -> Optional[str]:
+        """
+        Fetch a Chuck Norris joke (programming category).
+        
+        Returns:
+            Joke text or None on error
+        """
+        url = "https://api.chucknorris.io/jokes/random?category=dev"
+        data = self.api_client.get(url)
+        
+        if data and isinstance(data, dict):
+            return data.get("value", "")
+        
+        return None
+    
+    def get_random_content(self, content_type: Optional[str] = None) -> Optional[Dict[str, str]]:
+        """
+        Get random content from available APIs.
+        
+        Args:
+            content_type: Optional type filter ('joke', 'quote', or None for any)
+            
+        Returns:
+            Dictionary with 'content', 'type', and optionally 'author'
+        """
+        if content_type == "joke":
+            sources = ["dad_joke", "chuck_norris"]
+        elif content_type == "quote":
+            sources = ["programming_quote", "inspirational_quote"]
+        else:
+            sources = ["dad_joke", "programming_quote", "inspirational_quote", "chuck_norris"]
+        
+        # Try sources in random order
+        random.shuffle(sources)
+        
+        for source in sources:
+            try:
+                if source == "dad_joke":
+                    joke = self.get_dad_joke()
+                    if joke:
+                        return {"content": joke, "type": "joke", "source": "Dad Joke"}
+                
+                elif source == "chuck_norris":
+                    joke = self.get_chuck_norris_joke()
+                    if joke:
+                        return {"content": joke, "type": "joke", "source": "Chuck Norris"}
+                
+                elif source == "programming_quote":
+                    quote = self.get_programming_quote()
+                    if quote and quote["text"]:
+                        return {
+                            "content": quote["text"],
+                            "author": quote["author"],
+                            "type": "quote",
+                            "source": "Programming Quote"
+                        }
+                
+                elif source == "inspirational_quote":
+                    quote = self.get_inspirational_quote()
+                    if quote and quote["text"]:
+                        return {
+                            "content": quote["text"],
+                            "author": quote["author"],
+                            "type": "quote",
+                            "source": "Inspirational Quote"
+                        }
+            except Exception:
+                # Try next source if this one fails
+                continue
+        
+        return None
+
+
+def enhance_with_ollama(
+    content: Dict[str, str],
+    event_type: str = "SessionStart",
+    model: str = "phi3.5:3.8b"
+) -> str:
+    """
+    Enhance joke or quote with ollama for developer context.
+    
+    Args:
+        content: Content dictionary from API
+        event_type: Type of event
+        model: Ollama model to use
+        
+    Returns:
+        Enhanced message
+    """
+    if not content:
+        return "💫 Keep coding with enthusiasm!"
+    
+    content_text = content.get("content", "")
+    content_type = content.get("type", "")
+    author = content.get("author", "")
+    
+    try:
+        if content_type == "joke":
+            prompt = f"""Here's a joke: "{content_text}"
+            
+Rephrase this as a brief, encouraging message for a developer during their {event_type.lower()} event.
+Make it light-hearted but motivating. Maximum 20 words. Include one emoji."""
+        else:  # quote
+            prompt = f"""Here's a quote: "{content_text}" - {author}
+            
+Create a brief developer encouragement inspired by this quote for a {event_type.lower()} event.
+Maximum 20 words. Include one emoji. Make it practical and motivating."""
+        
+        result = subprocess.run(
+            ["ollama", "run", model, "--verbose=false"],
+            input=prompt,
+            text=True,
+            capture_output=True,
+            timeout=6
+        )
+        
+        if result.returncode == 0 and result.stdout:
+            message = result.stdout.strip().split('\n')[0].strip()
+            if len(message) > 120:
+                message = message[:117] + "..."
+            return message
+    except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
+        pass
+    
+    # Fallback: return the original content with emoji
+    if content_type == "joke":
+        return f"😄 {content_text[:100]}"
+    else:
+        return f"💭 \"{content_text[:80]}\" - {author}"
+
+
+def generate_external_message(
+    event_type: str = "SessionStart",
+    content_type: Optional[str] = None,
+    use_ollama: bool = True
+) -> Optional[str]:
+    """
+    Generate a message from external APIs.
+    
+    Args:
+        event_type: Type of event
+        content_type: Type of content to fetch ('joke', 'quote', or None)
+        use_ollama: Whether to enhance with ollama
+        
+    Returns:
+        Message or None on error
+    """
+    client = JokeQuoteClient()
+    
+    # Get random content
+    content = client.get_random_content(content_type)
+    
+    if not content:
+        return None
+    
+    if use_ollama:
+        return enhance_with_ollama(content, event_type)
+    else:
+        # Return formatted content without ollama
+        if content.get("type") == "joke":
+            return f"😄 {content['content'][:100]}"
+        else:
+            author = content.get("author", "Unknown")
+            return f"💭 \"{content['content'][:80]}\" - {author}"
+
+
+# Fallback messages if APIs are unavailable
+FALLBACK_JOKES = [
+    "Why do programmers prefer dark mode? Because light attracts bugs! 🐛",
+    "A SQL query walks into a bar, sees two tables and asks: 'Can I join you?' 🍺",
+    "Why did the developer quit? Because they didn't get arrays! 💰",
+    "How many programmers does it take to change a light bulb? None, it's a hardware problem! 💡",
+    "Why do Java developers wear glasses? Because they can't C#! 👓",
+]
+
+FALLBACK_QUOTES = [
+    '"First, solve the problem. Then, write the code." - John Johnson',
+    '"Experience is the name everyone gives to their mistakes." - Oscar Wilde',
+    '"The best way to predict the future is to implement it." - David Heinemeier Hansson',
+    '"Code is like humor. When you have to explain it, it\'s bad." - Cory House',
+    '"Programming is thinking, not typing." - Casey Patton',
+]
+
+
+def get_fallback_external_message(content_type: Optional[str] = None) -> str:
+    """Get a fallback message when APIs are unavailable."""
+    if content_type == "joke":
+        return random.choice(FALLBACK_JOKES)
+    elif content_type == "quote":
+        return random.choice(FALLBACK_QUOTES)
+    else:
+        all_messages = FALLBACK_JOKES + FALLBACK_QUOTES
+        return random.choice(all_messages)
+
+
+def test_external_apis():
+    """Test the external API integrations."""
+    print("Testing External API Integrations")
+    print("=" * 50)
+    
+    client = JokeQuoteClient()
+    
+    # Test dad joke
+    print("\n1. Dad Joke API:")
+    joke = client.get_dad_joke()
+    if joke:
+        print(f"   ✓ {joke[:80]}...")
+    else:
+        print("   ✗ Failed to fetch dad joke")
+    
+    # Test programming quote
+    print("\n2. Programming Quote API:")
+    quote = client.get_programming_quote()
+    if quote:
+        print(f"   ✓ \"{quote['text'][:60]}...\" - {quote['author']}")
+    else:
+        print("   ✗ Failed to fetch programming quote")
+    
+    # Test inspirational quote
+    print("\n3. Inspirational Quote API:")
+    quote = client.get_inspirational_quote()
+    if quote:
+        print(f"   ✓ \"{quote['text'][:60]}...\" - {quote['author']}")
+    else:
+        print("   ✗ Failed to fetch inspirational quote")
+    
+    # Test Chuck Norris joke
+    print("\n4. Chuck Norris Joke API:")
+    joke = client.get_chuck_norris_joke()
+    if joke:
+        print(f"   ✓ {joke[:80]}...")
+    else:
+        print("   ✗ Failed to fetch Chuck Norris joke")
+    
+    # Test random content
+    print("\n5. Random Content:")
+    for _ in range(3):
+        content = client.get_random_content()
+        if content:
+            if content.get("type") == "joke":
+                print(f"   • Joke: {content['content'][:60]}...")
+            else:
+                print(f"   • Quote: \"{content['content'][:50]}...\" - {content.get('author', 'Unknown')}")
+    
+    # Test message generation
+    print("\n6. Message Generation:")
+    print("   Without ollama:")
+    msg = generate_external_message(use_ollama=False)
+    print(f"   {msg}")
+    
+    print("\n   With ollama:")
+    msg = generate_external_message(use_ollama=True)
+    print(f"   {msg}")
+
+
+if __name__ == "__main__":
+    test_external_apis()
