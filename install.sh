@@ -133,37 +133,19 @@ fi
 if [ "$INSTALL_COMMANDS" = true ]; then
     echo -e "${YELLOW}Installing slash commands...${NC}"
     
-    # Create joke command
-    cat > "$COMMANDS_DIR/joke.md" << 'EOF'
----
-description: Generate a random developer joke
-allowed-tools: Bash(python3:*)
----
-
-## Generate Random Developer Joke
-
-!`python3 $CLAUDE_PROJECT_DIR/lib/joke_command.py 2>/dev/null || python3 ~/.claude/joke_command.py 2>/dev/null || echo "Script not found. Please run the mood-lifter-hooks installer."`
-
----
-
-*Displays a random programming joke to brighten your coding session! Uses ollama for creative jokes when available, with quality fallbacks.*
-EOF
-    
-    # Create JW text command
-    cat > "$COMMANDS_DIR/jwtext.md" << 'EOF'
----
-description: Display today's JW daily text with developer encouragement
-allowed-tools: Bash(python3:*)
----
-
-## JW Daily Text with Developer Encouragement
-
-!`python3 $CLAUDE_PROJECT_DIR/lib/jw_text_command.py 2>/dev/null || python3 ~/.claude/jw_text_command.py 2>/dev/null || echo "Script not found. Please run the mood-lifter-hooks installer."`
-
----
-
-*Fetches today's daily text from JW.org and provides developer-focused encouragement based on the scripture. If online fetch fails, it uses inspiring fallback texts.*
-EOF
+    # Copy command files from repository
+    if [ -d "$SCRIPT_DIR/commands" ]; then
+        cp "$SCRIPT_DIR/commands/joke.md" "$COMMANDS_DIR/" 2>/dev/null && \
+            echo -e "${GREEN}✓ Installed /joke command${NC}" || \
+            echo -e "${RED}✗ Failed to install /joke command${NC}"
+        
+        cp "$SCRIPT_DIR/commands/jwtext.md" "$COMMANDS_DIR/" 2>/dev/null && \
+            echo -e "${GREEN}✓ Installed /jwtext command${NC}" || \
+            echo -e "${RED}✗ Failed to install /jwtext command${NC}"
+    else
+        echo -e "${RED}✗ Commands directory not found in repository${NC}"
+        exit 1
+    fi
     
     echo -e "${GREEN}✓ Slash commands installed (/joke, /jwtext)${NC}"
 fi
