@@ -1,0 +1,8 @@
+# Core requirements
+# No external dependencies required for basic functionality
+# ollama is called via subprocess if available
+
+# Optional dependencies for future features
+# Uncomment if you want to enable external API integration:
+# requests>=2.28.0
+# beautifulsoup4>=4.11.0
