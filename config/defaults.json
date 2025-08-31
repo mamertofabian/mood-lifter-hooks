@@ -24,6 +24,7 @@
       "jw": {
         "enabled": true,
         "cache_hours": 24,
+        "rate_limit_minutes": 30,
         "use_past_dates": true,
         "past_days_range": 14
       },

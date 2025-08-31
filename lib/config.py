@@ -180,6 +180,10 @@ class Config:
         """Check if JW daily text is enabled."""
         return self.get("message_sources.jw.enabled", True)
     
+    def get_jw_rate_limit_minutes(self) -> int:
+        """Get JW content rate limit cooldown in minutes."""
+        return self.get("message_sources.jw.rate_limit_minutes", 30)
+    
     def is_external_apis_enabled(self) -> bool:
         """Check if external APIs are enabled."""
         return self.get("message_sources.external_apis.enabled", True)

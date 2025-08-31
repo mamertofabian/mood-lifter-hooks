@@ -10,6 +10,7 @@ import json
 import time
 from typing import Optional, List, Dict, Tuple
 from datetime import datetime, timedelta
+from lib.constants import Timeouts, Defaults
 
 
 class OllamaModelManager:
@@ -67,7 +68,7 @@ class OllamaModelManager:
                 ["ollama", "list"],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=Timeouts.OLLAMA_NORMAL
             )
             
             if result.returncode == 0:
@@ -183,7 +184,7 @@ class OllamaModelManager:
                 ["ollama", "pull", model_name],
                 capture_output=True,
                 text=True,
-                timeout=300  # 5 minute timeout for download
+                timeout=Timeouts.OLLAMA_DOWNLOAD
             )
             
             if result.returncode == 0:

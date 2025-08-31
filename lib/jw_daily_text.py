@@ -8,6 +8,7 @@ import random
 import subprocess
 import sys
 import os
+import re
 from datetime import datetime, timedelta
 from typing import Optional, Dict, List, Tuple
 
@@ -15,6 +16,7 @@ from typing import Optional, Dict, List, Tuple
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from lib.api_integrations import APIClient
+from lib.constants import Timeouts, CacheDuration
 
 
 class JWDailyTextClient:
@@ -32,7 +34,9 @@ class JWDailyTextClient:
         self.api_client = APIClient(
             base_url=None,
             cache_ttl_minutes=cache_ttl_hours * 60,
-            timeout=3  # Fast timeout for better UX
+            timeout=Timeouts.JW_API,
+            persistent_cache=True,  # Enable persistent caching for JW content
+            cache_dir=os.path.expanduser("~/.claude-code/mood-lifter/jw_cache")
         )
     
     def _build_url(self, date: Optional[datetime] = None) -> str:
@@ -86,18 +90,33 @@ class JWDailyTextClient:
                 title = item.get("title", "")
                 reference = item.get("reference", "")
                 
-                # Parse the content to extract scripture and commentary
+                # Parse the HTML content to extract scripture and commentary
                 scripture_text = ""
                 commentary = ""
                 
-                # The content typically contains scripture reference and commentary
                 if content:
-                    # Try to extract scripture and commentary
-                    # This is a simplified extraction - actual format may vary
-                    lines = content.strip().split('\n')
-                    if lines:
-                        scripture_text = lines[0] if lines else ""
-                        commentary = '\n'.join(lines[1:]) if len(lines) > 1 else ""
+                    # Extract the daily text scripture from the themeScrp paragraph
+                    # Pattern to find the scripture text and reference
+                    scripture_pattern = r'<p[^>]*class="themeScrp"[^>]*>.*?<em>(.*?)</em>.*?<em>(.*?)</em>.*?</p>'
+                    scripture_match = re.search(scripture_pattern, content, re.DOTALL)
+                    
+                    if scripture_match:
+                        # Combine the text and reference
+                        text_part = re.sub(r'<[^>]+>', '', scripture_match.group(1)).strip()
+                        ref_part = re.sub(r'<[^>]+>', '', scripture_match.group(2)).strip()
+                        scripture_text = f"{text_part}{ref_part}"
+                    
+                    # Extract the commentary from bodyTxt div
+                    bodytext_pattern = r'<div class="bodyTxt">(.*?)</div>'
+                    bodytext_match = re.search(bodytext_pattern, content, re.DOTALL)
+                    
+                    if bodytext_match:
+                        # Remove HTML tags from commentary
+                        commentary_html = bodytext_match.group(1)
+                        # Remove all HTML tags but keep the text
+                        commentary = re.sub(r'<[^>]+>', ' ', commentary_html)
+                        # Clean up extra whitespace
+                        commentary = ' '.join(commentary.split()).strip()
                 
                 return {
                     "date": date if date else datetime.now(),
@@ -167,7 +186,7 @@ def create_developer_encouragement(
     model: str = "phi3.5:3.8b"
 ) -> str:
     """
-    Create developer-focused encouragement from daily text.
+    Create spiritual encouragement from daily text.
     
     Args:
         daily_text: Daily text data
@@ -175,7 +194,7 @@ def create_developer_encouragement(
         model: Ollama model to use
         
     Returns:
-        Encouraging message for developers
+        Encouraging message
     """
     if not daily_text:
         return "💫 Keep coding with purpose and dedication!"
@@ -184,14 +203,20 @@ def create_developer_encouragement(
     commentary = daily_text.get("commentary", "").strip()
     title = daily_text.get("title", "").strip()
     
+    # Format the scripture text for display
+    scripture_display = scripture if scripture else ""
+    
     if use_ollama:
-        # Create a prompt for ollama
-        prompt = f"""Based on this daily text: "{scripture if scripture else title}"
+        # Create a prompt for ollama to summarize the daily text
+        # Keep it pure - just summarize the spiritual message without programming context
+        # Include both scripture and commentary for full context
+        full_text = f"{scripture_display} {commentary}" if scripture_display and commentary else (commentary or scripture_display or 'N/A')
         
-Commentary: {commentary[:200] if commentary else 'N/A'}
+        prompt = f"""Daily text to summarize:
+{full_text}
 
-Create a brief, encouraging message for a software developer that relates this wisdom to their coding journey. 
-Maximum 20 words. Include one appropriate emoji. Focus on practical encouragement."""
+Summarize the main spiritual message in one to three concise, encouraging sentences. 
+Keep the original spiritual essence."""
         
         try:
             result = subprocess.run(
@@ -199,27 +224,25 @@ Maximum 20 words. Include one appropriate emoji. Focus on practical encouragemen
                 input=prompt,
                 text=True,
                 capture_output=True,
-                timeout=3  # Keep it fast - better to fail than delay
+                timeout=Timeouts.OLLAMA_NORMAL
             )
             
             if result.returncode == 0 and result.stdout:
-                message = result.stdout.strip().split('\n')[0].strip()
-                if len(message) > 120:
-                    message = message[:117] + "..."
-                return message
+                summary = result.stdout.strip()
+                # Include the scripture text followed by the summary
+                if scripture_display:
+                    return f"📖 {scripture_display}\n{summary}"
+                else:
+                    return f"📖 Today's spiritual encouragement:\n{summary}"
         except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
             pass
     
-    # Fallback messages inspired by daily text themes
-    fallback_messages = [
-        f"📖 Today's wisdom: {title[:50]}... Apply it in your code!",
-        f"💡 Like today's text teaches, persevere in your coding journey!",
-        f"🌟 Reflect on: {scripture[:40]}... while you create!",
-        f"💪 Draw strength from today's text as you tackle challenges!",
-        f"🎯 Apply today's lesson: Code with purpose and integrity!",
-    ]
-    
-    return random.choice(fallback_messages)
+    # Fallback messages that include the scripture text
+    if scripture_display:
+        return f"📖 {scripture_display}\n💡 Reflect on this spiritual encouragement for your day."
+    else:
+        # If no scripture extracted, use simpler fallback
+        return f"📖 Today's text: {title[:50] if title else 'Daily wisdom'}\n🌟 Draw strength from today's spiritual message."
 
 
 def generate_jw_message(

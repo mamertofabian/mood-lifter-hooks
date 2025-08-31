@@ -17,12 +17,15 @@ from typing import Optional, Dict, Any
 if __name__ == "__main__":
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from lib.constants import Timeouts, MessageLimits
+
 # Import API integrations (these will be available once installed)
 try:
     from lib.jw_daily_text import generate_jw_message
     from lib.external_apis import generate_external_message, get_fallback_external_message
     from lib.ollama_models import OllamaModelManager, generate_with_model
     from lib.config import get_config
+    from lib.rate_limiter import should_show_jw_content, mark_jw_content_shown
     API_FEATURES_AVAILABLE = True
 except ImportError:
     API_FEATURES_AVAILABLE = False
@@ -154,15 +157,13 @@ def generate_with_ollama(event_type: str, model: Optional[str] = None, use_varie
             input=prompt,
             text=True,
             capture_output=True,
-            timeout=3  # 3 second timeout - fail fast
+            timeout=Timeouts.OLLAMA_QUICK
         )
         
         if result.returncode == 0 and result.stdout:
             # Clean up the output - take first line, trim whitespace
             message = result.stdout.strip().split('\n')[0].strip()
-            # Ensure it's not too long
-            if len(message) > 100:
-                message = message[:97] + "..."
+            # Let ollama decide the length, don't truncate
             return message
             
     except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
@@ -215,12 +216,25 @@ def generate_message(
     
     # If API features are available and source is specified or randomly selected
     if API_FEATURES_AVAILABLE:
-        # Determine message source
+        # Special handling for SessionStart: Always try JW content first if not rate limited
+        if event_type == "SessionStart" and message_source is None:
+            # Check if JW content should be shown (rate limiting)
+            if should_show_jw_content():
+                # Try JW content first for session start
+                message_source = 'jw'
+            else:
+                # JW content is rate limited, use normal selection
+                message_source = None
+        
+        # Determine message source if not already set
         if message_source is None and config:
             # Use configuration-based weighted selection
             weights = config.get_message_source_weights()
             sources = []
             for source, weight in weights.items():
+                # Skip JW if it's rate limited
+                if source == 'jw' and not should_show_jw_content():
+                    continue
                 sources.extend([source] * weight)
             
             # Apply time preferences if configured
@@ -228,7 +242,7 @@ def generate_message(
                 preferred = config.get_preferred_sources_for_time()
                 # Boost preferred sources
                 for source in preferred:
-                    if source in weights:
+                    if source in weights and (source != 'jw' or should_show_jw_content()):
                         sources.extend([source] * 10)
             
             message_source = random.choice(sources) if sources else 'default'
@@ -236,7 +250,9 @@ def generate_message(
             # Fallback to default weighted selection
             sources = ['default'] * 4  # 40% chance
             if API_FEATURES_AVAILABLE:
-                sources.extend(['jw'] * 2)  # 20% chance
+                # Only add JW if not rate limited
+                if should_show_jw_content():
+                    sources.extend(['jw'] * 2)  # 20% chance
                 sources.extend(['joke'] * 2)  # 20% chance
                 sources.extend(['quote'] * 2)  # 20% chance
             message_source = random.choice(sources)
@@ -245,6 +261,8 @@ def generate_message(
         if message_source == 'jw' and (not config or config.is_jw_enabled()):
             message = generate_jw_message(event_type, use_ollama=use_ollama)
             if message:
+                # Mark JW content as shown for rate limiting
+                mark_jw_content_shown()
                 return _apply_config_formatting(message, config)
         elif message_source == 'joke' and (not config or config.is_external_apis_enabled()):
             message = generate_external_message(event_type, content_type='joke', use_ollama=use_ollama)
@@ -285,10 +303,11 @@ def _apply_config_formatting(message: str, config: Optional[Any]) -> str:
     if not config:
         return message
     
-    # Apply max length
+    # Apply max length only if configured and not from ollama
+    # Ollama responses should be kept as-is since the AI was instructed on length
     max_length = config.get_max_message_length()
-    if len(message) > max_length:
-        message = message[:max_length-3] + "..."
+    # Note: We could add a flag to know if message came from ollama
+    # For now, we'll skip truncation entirely to respect AI output
     
     # Remove emojis if configured
     if not config.include_emojis():

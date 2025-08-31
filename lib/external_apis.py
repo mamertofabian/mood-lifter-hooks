@@ -14,6 +14,7 @@ from typing import Optional, List, Dict
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from lib.api_integrations import APIClient
+from lib.constants import Timeouts, CacheDuration
 
 
 class JokeQuoteClient:
@@ -21,7 +22,10 @@ class JokeQuoteClient:
     
     def __init__(self):
         """Initialize the joke/quote client."""
-        self.api_client = APIClient(cache_ttl_minutes=60, timeout=2)  # Fast timeout for jokes
+        self.api_client = APIClient(
+            cache_ttl_minutes=CacheDuration.EXTERNAL_CONTENT,
+            timeout=Timeouts.EXTERNAL_APIS
+        )
         
         # Public APIs that don't require authentication
         self.dad_joke_api = "https://icanhazdadjoke.com/"
@@ -215,13 +219,12 @@ Maximum 20 words. Include one emoji. Make it practical and motivating."""
             input=prompt,
             text=True,
             capture_output=True,
-            timeout=3  # Reduced for better UX
+            timeout=Timeouts.OLLAMA_QUICK
         )
         
         if result.returncode == 0 and result.stdout:
             message = result.stdout.strip().split('\n')[0].strip()
-            if len(message) > 120:
-                message = message[:117] + "..."
+            # Keep the full ollama response without truncation
             return message
     except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
         pass

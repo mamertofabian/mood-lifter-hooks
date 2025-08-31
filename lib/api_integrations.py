@@ -7,11 +7,15 @@ Provides HTTP client with error handling, retries, and caching.
 import json
 import time
 import hashlib
+import os
+import pickle
+from pathlib import Path
 from typing import Optional, Dict, Any, Union
 from datetime import datetime, timedelta
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+from lib.constants import Timeouts, CacheDuration
 
 
 class CacheEntry:
@@ -32,9 +36,11 @@ class APIClient:
     def __init__(
         self, 
         base_url: Optional[str] = None,
-        timeout: int = 3,  # Reduced from 10 to 3 seconds
-        max_retries: int = 1,  # Reduced from 3 to 1 - fail fast
-        cache_ttl_minutes: int = 30  # Increased cache to reduce API calls
+        timeout: int = Timeouts.DEFAULT_API,
+        max_retries: int = Timeouts.MAX_RETRIES,
+        cache_ttl_minutes: int = CacheDuration.DEFAULT,
+        persistent_cache: bool = False,
+        cache_dir: Optional[str] = None
     ):
         """
         Initialize API client.
@@ -48,13 +54,24 @@ class APIClient:
         self.base_url = base_url
         self.timeout = timeout
         self.cache_ttl_minutes = cache_ttl_minutes
-        self._cache: Dict[str, CacheEntry] = {}
+        self.persistent_cache = persistent_cache
+        
+        # Set up cache directory for persistent caching
+        if persistent_cache:
+            if cache_dir is None:
+                cache_dir = os.path.expanduser("~/.claude-code/mood-lifter/cache")
+            self.cache_dir = Path(cache_dir)
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
+        else:
+            self.cache_dir = None
+        
+        self._cache: Dict[str, CacheEntry] = self._load_persistent_cache() if persistent_cache else {}
         
         # Create session with retry strategy
         self.session = requests.Session()
         retry_strategy = Retry(
             total=max_retries,
-            backoff_factor=0.3,
+            backoff_factor=Timeouts.RETRY_BACKOFF,
             status_forcelist=[429, 500, 502, 503, 504],
             allowed_methods=["GET", "POST"]
         )
@@ -76,22 +93,93 @@ class APIClient:
     
     def _get_from_cache(self, cache_key: str) -> Optional[Any]:
         """Get data from cache if available and not expired."""
+        # Try memory cache first
         if cache_key in self._cache:
             entry = self._cache[cache_key]
             if not entry.is_expired():
                 return entry.data
             else:
                 del self._cache[cache_key]
+                if self.persistent_cache:
+                    self._save_persistent_cache()
+        
+        # Try persistent cache if enabled and not in memory
+        if self.persistent_cache and cache_key not in self._cache:
+            cache_file = self.cache_dir / f"{cache_key}.cache"
+            if cache_file.exists():
+                try:
+                    with open(cache_file, 'rb') as f:
+                        entry = pickle.load(f)
+                        if not entry.is_expired():
+                            # Load into memory cache
+                            self._cache[cache_key] = entry
+                            return entry.data
+                        else:
+                            # Remove expired cache file
+                            cache_file.unlink()
+                except (pickle.PickleError, IOError):
+                    pass
+        
         return None
     
     def _add_to_cache(self, cache_key: str, data: Any):
         """Add data to cache with expiration."""
         expires_at = datetime.now() + timedelta(minutes=self.cache_ttl_minutes)
-        self._cache[cache_key] = CacheEntry(data, expires_at)
+        entry = CacheEntry(data, expires_at)
+        self._cache[cache_key] = entry
+        
+        # Save to persistent cache if enabled
+        if self.persistent_cache:
+            cache_file = self.cache_dir / f"{cache_key}.cache"
+            try:
+                with open(cache_file, 'wb') as f:
+                    pickle.dump(entry, f)
+            except (pickle.PickleError, IOError):
+                pass
     
     def clear_cache(self):
         """Clear all cached data."""
         self._cache.clear()
+        
+        # Clear persistent cache if enabled
+        if self.persistent_cache and self.cache_dir:
+            for cache_file in self.cache_dir.glob("*.cache"):
+                try:
+                    cache_file.unlink()
+                except IOError:
+                    pass
+    
+    def _load_persistent_cache(self) -> Dict[str, CacheEntry]:
+        """Load cache from persistent storage."""
+        cache = {}
+        if self.cache_dir and self.cache_dir.exists():
+            for cache_file in self.cache_dir.glob("*.cache"):
+                try:
+                    with open(cache_file, 'rb') as f:
+                        entry = pickle.load(f)
+                        if not entry.is_expired():
+                            cache_key = cache_file.stem
+                            cache[cache_key] = entry
+                        else:
+                            # Remove expired cache file
+                            cache_file.unlink()
+                except (pickle.PickleError, IOError):
+                    pass
+        return cache
+    
+    def _save_persistent_cache(self):
+        """Save current memory cache to persistent storage."""
+        if not self.persistent_cache or not self.cache_dir:
+            return
+        
+        for cache_key, entry in self._cache.items():
+            if not entry.is_expired():
+                cache_file = self.cache_dir / f"{cache_key}.cache"
+                try:
+                    with open(cache_file, 'wb') as f:
+                        pickle.dump(entry, f)
+                except (pickle.PickleError, IOError):
+                    pass
     
     def get(
         self, 
