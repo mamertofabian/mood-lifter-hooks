@@ -232,11 +232,12 @@ IMPORTANT: Just output the summary, DO NOT include any other text (e.g., metadat
             
             if result.returncode == 0 and result.stdout:
                 summary = result.stdout.strip()
+                header = "📖 Today's spiritual encouragement:\n"
                 # Include the scripture text followed by the summary
                 if scripture_display:
-                    return f"📖 {scripture_display}\n{summary}"
+                    return f"{header}{scripture_display}\n{summary}"
                 else:
-                    return f"📖 Today's spiritual encouragement:\n{summary}"
+                    return f"{header}{summary}"
         except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
             pass
     
