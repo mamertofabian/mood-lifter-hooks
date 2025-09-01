@@ -66,11 +66,11 @@ def generate_joke_with_ollama():
         
         # Generate joke
         prompts = [
-            "Tell me a short, funny programming joke. Keep it under 50 words. Be creative and original. Only output the joke, no metadata.",
-            "Share a witty developer joke about debugging, git, or coding. Maximum 50 words. Only output the joke, no metadata.",
-            "Create a humorous programming pun or wordplay. Keep it brief and clever. Only output the joke, no metadata.",
-            "Tell a funny story about a programmer's daily life in under 50 words. Only output the story, no metadata.",
-            "Share a tech joke about JavaScript, Python, or any programming language. Be concise and funny. Only output the joke, no metadata."
+            "Tell me a short, hilariously relatable programming joke. Keep it under 50 words. Be creative and witty. Only output the joke, no metadata.",
+            "Share a witty developer joke about debugging nightmares, git disasters, or coding chaos. Maximum 50 words. Only output the joke, no metadata.",
+            "Create a clever programming pun that'll make developers groan and laugh. Keep it brief and punchy. Only output the joke, no metadata.",
+            "Tell a funny story about a programmer's daily struggles in under 50 words. Make it ridiculously relatable. Only output the story, no metadata.",
+            "Share a tech joke about JavaScript quirks, Python indentation, or any programming language weirdness. Be hilarious. Only output the joke, no metadata."
         ]
         
         prompt = random.choice(prompts)

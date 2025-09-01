@@ -84,49 +84,49 @@ def get_model_manager():
 # Fallback messages for when ollama is unavailable
 FALLBACK_MESSAGES = {
     "SessionStart": [
-        "🚀 Ready to create something amazing today!",
-        "💻 Your code journey begins - let's make it great!",
-        "✨ Every expert was once a beginner. Keep coding!",
-        "🌟 Time to turn ideas into reality through code!",
-        "💪 You've got this! Let's write some awesome code!",
-        "🎯 Focus, create, and enjoy the process!",
-        "🔥 Another day, another opportunity to level up!",
-        "🌈 Your creativity + code = endless possibilities!",
+        "🚀 Ready to create something amazing today (or at least compile without errors)!",
+        "💻 Your code journey begins - may your syntax be valid!",
+        "✨ Every expert was once a beginner who Googled everything!",
+        "🌟 Time to turn ideas into reality (and Stack Overflow into bookmarks)!",
+        "💪 You've got this! Coffee level: optimal ☕",
+        "🎯 Focus, create, and remember to push to git!",
+        "🔥 Another day, another chance to outsmart yesterday's bugs!",
+        "🌈 Your creativity + code = endless possibilities (and debugging sessions)!",
     ],
     "Stop": [
-        "🎉 Great work! Your efforts today matter!",
-        "✅ Progress made! Every line counts!",
-        "🌟 Well done! Rest and come back stronger!",
-        "💯 You crushed it! Be proud of what you built!",
-        "🚀 Mission accomplished! Your code looks great!",
-        "🎯 Target hit! You're getting better every day!",
-        "✨ Fantastic session! Your dedication shows!",
-        "💪 Strong finish! Your future self will thank you!",
+        "🎉 Great work! No compiler errors is basically wizardry!",
+        "✅ Progress made! Every semicolon counts!",
+        "🌟 Well done! Time to rest (and dream in code)!",
+        "💯 You crushed it! The bugs didn't stand a chance!",
+        "🚀 Mission accomplished! Git commit and chill!",
+        "🎯 Target hit! Your keyboard survived another day!",
+        "✨ Fantastic session! Even Stack Overflow is proud!",
+        "💪 Strong finish! Your rubber duck can rest easy now!",
     ],
     "Notification": [
-        "💡 Keep going! You're on the right track!",
-        "🌟 Your persistence is your superpower!",
-        "🚀 Every bug fixed is a lesson learned!",
-        "💪 Challenge accepted, solution incoming!",
-        "✨ You're doing great! Keep up the momentum!",
-        "🎯 Stay focused - breakthrough is near!",
-        "🔥 Your code is taking shape beautifully!",
-        "🌈 Remember: progress, not perfection!",
+        "💡 Keep going! You're debugging like a pro!",
+        "🌟 Your persistence is your superpower (and caffeine helps)!",
+        "🚀 Every bug fixed is XP gained!",
+        "💪 Challenge accepted, Stack Overflow at the ready!",
+        "✨ You're doing great! The compiler agrees!",
+        "🎯 Stay focused - that 'Aha!' moment is coming!",
+        "🔥 Your code is taking shape (and it's beautiful)!",
+        "🌈 Remember: progress, not perfection (but working code is nice)!",
     ]
 }
 
 # Ollama prompts for different events
 OLLAMA_PROMPTS = {
     "SessionStart": {
-        "morning": "Generate a brief, encouraging morning message for a developer starting their coding session. Include one emoji. Maximum 15 words. Be positive and energizing.",
-        "afternoon": "Generate a brief, encouraging afternoon message for a developer continuing their work. Include one emoji. Maximum 15 words. Be motivating and focused.",
-        "evening": "Generate a brief, encouraging evening message for a developer working late. Include one emoji. Maximum 15 words. Be supportive and appreciative.",
+        "morning": "Generate a brief, encouraging morning message for a developer starting their coding session. Include one emoji. Maximum 15 words. Be positive, energizing, and slightly humorous. Only output the message, no metadata.",
+        "afternoon": "Generate a brief, encouraging afternoon message for a developer continuing their work. Include one emoji. Maximum 15 words. Be motivating, focused, and add a touch of humor. Only output the message, no metadata.",
+        "evening": "Generate a brief, encouraging evening message for a developer working late. Include one emoji. Maximum 15 words. Be supportive, appreciative, and lightly humorous. Only output the message, no metadata.",
     },
     "Stop": {
-        "default": "Generate a brief, congratulatory message for a developer finishing their coding work. Include one emoji. Maximum 15 words. Celebrate their effort and progress.",
+        "default": "Generate a brief, congratulatory message for a developer finishing their coding work. Include one emoji. Maximum 15 words. Celebrate their effort with humor and positivity. Only output the message, no metadata.",
     },
     "Notification": {
-        "default": "Generate a brief, encouraging message for a developer in the middle of coding. Include one emoji. Maximum 15 words. Be supportive and motivating.",
+        "default": "Generate a brief, encouraging message for a developer in the middle of coding. Include one emoji. Maximum 15 words. Be supportive, motivating, and add some humor. Only output the message, no metadata.",
     }
 }
 

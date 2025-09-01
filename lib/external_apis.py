@@ -207,12 +207,12 @@ def enhance_with_ollama(
             prompt = f"""Here's a joke: "{content_text}"
             
 Rephrase this as a brief, encouraging message for a developer during their {event_type.lower()} event.
-Make it light-hearted but motivating. Maximum 20 words. Include one emoji. Only output the message, no metadata."""
+Make it light-hearted, humorous, and motivating. Maximum 20 words. Include one emoji. Only output the message, no metadata."""
         else:  # quote
             prompt = f"""Here's a quote: "{content_text}" - {author}
             
 Create a brief developer encouragement inspired by this quote for a {event_type.lower()} event.
-Maximum 20 words. Include one emoji. Make it practical and motivating. Only output the message, no metadata."""
+Maximum 20 words. Include one emoji. Make it practical, motivating, and add a touch of coding humor. Only output the message, no metadata."""
         
         result = subprocess.run(
             ["ollama", "run", model, "--verbose=false"],
