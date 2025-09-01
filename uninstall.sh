@@ -196,10 +196,11 @@ if [ "$REMOVE_HOOKS" = true ] && [ -d "$HOOKS_DIR" ]; then
     fi
 fi
 
-# Remove Python scripts (optional)
+# Remove Python scripts and lib modules (optional)
 if [ "$REMOVE_SCRIPTS" = true ]; then
-    echo -e "${YELLOW}Removing Python scripts...${NC}"
+    echo -e "${YELLOW}Removing Python scripts and lib modules...${NC}"
     
+    # Remove main scripts from ~/.claude
     SCRIPTS=("message_generator.py" "joke_command.py" "jw_text_command.py")
     
     for script in "${SCRIPTS[@]}"; do
@@ -208,6 +209,52 @@ if [ "$REMOVE_SCRIPTS" = true ]; then
             echo -e "${GREEN}✓ Removed $script${NC}"
         fi
     done
+    
+    # Remove only our specific lib files (not the entire folder!)
+    if [ -d "$HOME/.claude/lib" ]; then
+        echo -e "${YELLOW}Removing mood-lifter lib modules...${NC}"
+        
+        # List of our lib files to remove
+        LIB_FILES=(
+            "api_integrations.py"
+            "config.py"
+            "constants.py"
+            "external_apis.py"
+            "joke_command.py"
+            "jw_daily_text.py"
+            "jw_text_command.py"
+            "message_generator.py"
+            "ollama_models.py"
+            "rate_limiter.py"
+        )
+        
+        for lib_file in "${LIB_FILES[@]}"; do
+            if [ -f "$HOME/.claude/lib/$lib_file" ]; then
+                rm "$HOME/.claude/lib/$lib_file"
+                echo -e "${GREEN}  ✓ Removed lib/$lib_file${NC}"
+            fi
+        done
+        
+        # Also remove __pycache__ if it exists
+        if [ -d "$HOME/.claude/lib/__pycache__" ]; then
+            rm -rf "$HOME/.claude/lib/__pycache__"
+            echo -e "${GREEN}  ✓ Removed lib/__pycache__${NC}"
+        fi
+        
+        # Only remove the lib folder if it's now empty
+        if [ -z "$(ls -A "$HOME/.claude/lib" 2>/dev/null)" ]; then
+            rmdir "$HOME/.claude/lib"
+            echo -e "${GREEN}✓ Removed empty lib folder${NC}"
+        else
+            echo -e "${YELLOW}⚠ lib folder not removed (contains other files)${NC}"
+        fi
+    fi
+    
+    # Remove our cache directories if they exist
+    if [ -d "$HOME/.claude-code/mood-lifter" ]; then
+        rm -rf "$HOME/.claude-code/mood-lifter"
+        echo -e "${GREEN}✓ Removed mood-lifter cache directory${NC}"
+    fi
 fi
 
 # Success message
@@ -233,6 +280,8 @@ fi
 if [ "$REMOVE_SCRIPTS" = true ]; then
     echo -e "${BLUE}Removed:${NC}"
     echo "  • Python support scripts"
+    echo "  • Lib modules (JW text, jokes, quotes APIs)"
+    echo "  • Cache directories"
 fi
 
 echo ""

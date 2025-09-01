@@ -17,7 +17,30 @@ from typing import Optional, Dict, Any
 if __name__ == "__main__":
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from lib.constants import Timeouts, MessageLimits
+# Add ~/.claude to path for lib imports (lib folder is copied here during installation)
+CLAUDE_DIR = os.path.expanduser("~/.claude")
+if os.path.exists(CLAUDE_DIR) and CLAUDE_DIR not in sys.path:
+    sys.path.insert(0, CLAUDE_DIR)
+
+# Also try the original project directory as fallback
+PROJECT_DIR = "/home/atomrem/projects/codefrost-dev/mood-lifter-hooks"
+if os.path.exists(PROJECT_DIR) and PROJECT_DIR not in sys.path:
+    sys.path.insert(0, PROJECT_DIR)
+
+# Try importing from lib, with fallback values
+try:
+    from lib.constants import Timeouts, MessageLimits
+except ImportError:
+    # Define fallback constants if imports fail
+    class Timeouts:
+        OLLAMA_GENERATE = 3.0
+        OLLAMA_QUICK = 2.0  # Reduced timeout for better responsiveness
+        EXTERNAL_API = 2.0
+        JW_API = 3.0
+    
+    class MessageLimits:
+        MAX_MESSAGE_LENGTH = 200
+        MIN_MESSAGE_LENGTH = 10
 
 # Import API integrations (these will be available once installed)
 try:
@@ -132,6 +155,15 @@ def generate_with_ollama(event_type: str, model: Optional[str] = None, use_varie
         Generated message or None if failed
     """
     try:
+        # Normalize event type to handle both formats
+        event_map = {
+            'start': 'SessionStart',
+            'sessionstart': 'SessionStart',
+            'stop': 'Stop',
+            'notification': 'Notification'
+        }
+        event_type = event_map.get(event_type.lower(), event_type)
+        
         # Get appropriate prompt based on event type and time
         prompts = OLLAMA_PROMPTS.get(event_type, {})
         
@@ -175,7 +207,15 @@ def generate_with_ollama(event_type: str, model: Optional[str] = None, use_varie
 
 def get_fallback_message(event_type: str) -> str:
     """Get a random fallback message for the given event type."""
-    messages = FALLBACK_MESSAGES.get(event_type, FALLBACK_MESSAGES["Notification"])
+    # Normalize event type to handle both formats
+    event_map = {
+        'start': 'SessionStart',
+        'sessionstart': 'SessionStart',
+        'stop': 'Stop',
+        'notification': 'Notification'
+    }
+    normalized_type = event_map.get(event_type.lower(), event_type)
+    messages = FALLBACK_MESSAGES.get(normalized_type, FALLBACK_MESSAGES["Notification"])
     return random.choice(messages)
 
 
@@ -201,6 +241,15 @@ def generate_message(
     Returns:
         An encouraging message
     """
+    # Normalize event type to handle both formats
+    event_map = {
+        'start': 'SessionStart',
+        'sessionstart': 'SessionStart',
+        'stop': 'Stop',
+        'notification': 'Notification'
+    }
+    event_type = event_map.get(event_type.lower(), event_type)
+    
     # Load configuration if enabled
     config = get_config() if use_config else None
     
@@ -392,3 +441,4 @@ if __name__ == "__main__":
             print(f"  {i+1}. {msg}")
     else:
         print("\n\nAPI features not available (dependencies may not be installed)")
+        

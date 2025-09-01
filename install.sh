@@ -118,10 +118,16 @@ fi
 if [ "$INSTALL_COMMANDS" = true ] || [ "$INSTALL_HOOKS" = true ]; then
     echo -e "${YELLOW}Installing Python scripts...${NC}"
     
-    # Copy core library files
+    # Copy core library files and lib folder for API features
     cp "$SCRIPT_DIR/lib/message_generator.py" "$USER_CLAUDE_DIR/" 2>/dev/null || true
     cp "$SCRIPT_DIR/lib/joke_command.py" "$USER_CLAUDE_DIR/" 2>/dev/null || true
     cp "$SCRIPT_DIR/lib/jw_text_command.py" "$USER_CLAUDE_DIR/" 2>/dev/null || true
+    
+    # Copy entire lib folder to ensure all modules are available
+    echo -e "${YELLOW}Installing lib modules for API features...${NC}"
+    cp -r "$SCRIPT_DIR/lib" "$USER_CLAUDE_DIR/" 2>/dev/null && \
+        echo -e "${GREEN}✓ Lib modules installed (enables JW text, jokes, quotes)${NC}" || \
+        echo -e "${YELLOW}⚠ Could not install lib modules${NC}"
     
     # Make scripts executable
     chmod +x "$USER_CLAUDE_DIR"/*.py 2>/dev/null || true
@@ -170,10 +176,9 @@ from message_generator import generate_message
 try:
     input_data = json.load(sys.stdin)
     message = generate_message('start')
+    # For SessionStart, just print the message
+    # The hook output is automatically not added to context
     print(message)
-    # Suppress output from context for SessionStart
-    output = {"suppressOutput": True}
-    print(json.dumps(output))
 except Exception:
     pass
 EOF

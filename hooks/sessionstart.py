@@ -43,11 +43,9 @@ def main():
         if not message:
             sys.exit(0)
         
-        # Format output for SessionStart (JSON with suppressOutput)
-        output = format_hook_output(message, "SessionStart")
-        
-        # Output JSON to stdout
-        print(json.dumps(output))
+        # For SessionStart, just print the message
+        # The hook output is automatically not added to context
+        print(message)
         
         # Success
         sys.exit(0)

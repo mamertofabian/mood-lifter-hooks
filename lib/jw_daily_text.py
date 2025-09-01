@@ -216,7 +216,10 @@ def create_developer_encouragement(
 {full_text}
 
 Summarize the main spiritual message in one to three concise, encouraging sentences. 
-Keep the original spiritual essence."""
+Keep the original spiritual essence.
+
+IMPORTANT: Just output the summary, DO NOT include any other text (e.g., metadata like sentence count, etc).
+"""
         
         try:
             result = subprocess.run(
