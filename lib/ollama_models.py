@@ -302,7 +302,7 @@ def test_model_manager():
     
     # Test generation with model rotation
     print("\n4. Message Generation with Different Models:")
-    prompt = "Generate a brief encouraging message for a developer. Maximum 10 words. Include one emoji."
+    prompt = "Generate a brief encouraging message for a developer. Maximum 10 words. Include one emoji. Only output the message, no metadata."
     
     for i in range(3):
         model = manager.select_model()
