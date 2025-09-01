@@ -164,57 +164,28 @@ if [ "$INSTALL_HOOKS" = true ]; then
     HOOKS_DIR="$CLAUDE_DIR/hooks"
     mkdir -p "$HOOKS_DIR"
     
-    # Create hook scripts
-    cat > "$HOOKS_DIR/sessionstart.py" << 'EOF'
-#!/usr/bin/env python3
-import json
-import sys
-import os
-sys.path.insert(0, os.path.expanduser('~/.claude'))
-from message_generator import generate_message
-
-try:
-    input_data = json.load(sys.stdin)
-    message = generate_message('start')
-    # For SessionStart, just print the message
-    # The hook output is automatically not added to context
-    print(message)
-except Exception:
-    pass
-EOF
-    
-    cat > "$HOOKS_DIR/stop.py" << 'EOF'
-#!/usr/bin/env python3
-import json
-import sys
-import os
-sys.path.insert(0, os.path.expanduser('~/.claude'))
-from message_generator import generate_message
-
-try:
-    input_data = json.load(sys.stdin)
-    print("\n" + generate_message('stop'))
-except Exception:
-    pass
-EOF
-    
-    cat > "$HOOKS_DIR/notification.py" << 'EOF'
-#!/usr/bin/env python3
-import json
-import sys
-import os
-sys.path.insert(0, os.path.expanduser('~/.claude'))
-from message_generator import generate_message
-
-try:
-    input_data = json.load(sys.stdin)
-    print("\n" + generate_message('notification'))
-except Exception:
-    pass
-EOF
-    
-    # Make hook scripts executable
-    chmod +x "$HOOKS_DIR"/*.py
+    # Copy hook scripts from repository
+    echo -e "${YELLOW}Copying hook scripts from repository...${NC}"
+    if [ -d "$SCRIPT_DIR/hooks" ]; then
+        cp "$SCRIPT_DIR/hooks/sessionstart.py" "$HOOKS_DIR/" 2>/dev/null && \
+            echo -e "${GREEN}✓ Copied sessionstart.py${NC}" || \
+            echo -e "${RED}✗ Failed to copy sessionstart.py${NC}"
+        
+        cp "$SCRIPT_DIR/hooks/stop.py" "$HOOKS_DIR/" 2>/dev/null && \
+            echo -e "${GREEN}✓ Copied stop.py${NC}" || \
+            echo -e "${RED}✗ Failed to copy stop.py${NC}"
+        
+        cp "$SCRIPT_DIR/hooks/notification.py" "$HOOKS_DIR/" 2>/dev/null && \
+            echo -e "${GREEN}✓ Copied notification.py${NC}" || \
+            echo -e "${RED}✗ Failed to copy notification.py${NC}"
+        
+        # Make hook scripts executable
+        chmod +x "$HOOKS_DIR"/*.py
+        echo -e "${GREEN}✓ Hook scripts installed from repository${NC}"
+    else
+        echo -e "${RED}✗ Hooks directory not found in repository${NC}"
+        exit 1
+    fi
     
     # Update settings.json
     if [ -f "$SETTINGS_FILE" ]; then
