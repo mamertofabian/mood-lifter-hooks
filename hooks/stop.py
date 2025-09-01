@@ -24,11 +24,24 @@ try:
     if input_data.get("stop_hook_active", False):
         sys.exit(0)
     
-    # Generate and display message
-    message = generate_message('Stop')
-    if message:
-        print("\n" + message)
+    # Generate and display message using JSON format
+    try:
+        message = generate_message('Stop')
+        if not message:
+            message = "🎉 Great work! Your efforts today matter!"
+    except:
+        # Simple fallback if message generation fails
+        message = "✨ Session complete! Keep up the great work!"
     
-except Exception:
-    # Exit quietly on error
-    pass
+    # Use JSON output format for proper display in Claude Code
+    output = {
+        "systemMessage": message
+    }
+    print(json.dumps(output), flush=True)
+    
+except Exception as e:
+    # Print a fallback message even on error
+    fallback_output = {
+        "systemMessage": "🌟 Well done! Your coding session is complete!"
+    }
+    print(json.dumps(fallback_output), flush=True)
