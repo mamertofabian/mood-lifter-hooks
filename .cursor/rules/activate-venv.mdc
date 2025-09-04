@@ -1,0 +1,6 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+Activate the virtual environment before running python code (uv)

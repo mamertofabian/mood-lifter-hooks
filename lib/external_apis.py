@@ -29,11 +29,12 @@ class JokeQuoteClient:
         
         # Public APIs that don't require authentication
         self.dad_joke_api = "https://icanhazdadjoke.com/"
-        self.quote_api = "https://api.quotable.io/random"
+        # Reliable quote APIs
+        self.zenquotes_api = "https://zenquotes.io/api/random"
+        self.quotegarden_api = "https://quote-garden.herokuapp.com/api/v3/quotes/random"
         # Better programming joke APIs (Heroku one is often down)
         self.programming_joke_api = "https://v2.jokeapi.dev/joke/Programming"
         self.official_joke_api = "https://official-joke-api.appspot.com/jokes/programming/random"
-        self.typefit_quotes_api = "https://type.fit/api/quotes"
     
     def get_dad_joke(self) -> Optional[str]:
         """
@@ -87,27 +88,27 @@ class JokeQuoteClient:
         Returns:
             Dictionary with 'text' and 'author' or None on error
         """
-        # Try Quotable.io first
-        params = {"tags": "technology|success|motivational|inspirational", "maxLength": 150}
-        data = self.api_client.get(self.quote_api, params=params)
-        
-        if data and isinstance(data, dict):
-            return {
-                "text": data.get("content", ""),
-                "author": data.get("author", "Unknown")
-            }
-        
-        # Fallback to Type.fit quotes
-        data = self.api_client.get(self.typefit_quotes_api)
+        # Try Zen Quotes API first
+        data = self.api_client.get(self.zenquotes_api)
         if data and isinstance(data, list) and len(data) > 0:
-            # Get a random quote
-            import random
-            quote = random.choice(data[:50])  # Use first 50 to avoid too much randomness
-            if isinstance(quote, dict):
+            quote_data = data[0]
+            if isinstance(quote_data, dict):
                 return {
-                    "text": quote.get("text", ""),
-                    "author": quote.get("author", "Unknown")
+                    "text": quote_data.get("q", ""),
+                    "author": quote_data.get("a", "Unknown")
                 }
+        
+        # Fallback to Quote Garden API
+        data = self.api_client.get(self.quotegarden_api)
+        if data and isinstance(data, dict):
+            quote_data = data.get("data", [])
+            if isinstance(quote_data, list) and len(quote_data) > 0:
+                quote = quote_data[0]
+                if isinstance(quote, dict):
+                    return {
+                        "text": quote.get("quoteText", ""),
+                        "author": quote.get("quoteAuthor", "Unknown")
+                    }
         
         return None
     
@@ -320,16 +321,8 @@ def test_external_apis():
     else:
         print("   ✗ Failed to fetch dad joke")
     
-    # Test programming quote
-    print("\n2. Programming Quote API:")
-    quote = client.get_programming_quote()
-    if quote:
-        print(f"   ✓ \"{quote['text'][:60]}...\" - {quote['author']}")
-    else:
-        print("   ✗ Failed to fetch programming quote")
-    
     # Test inspirational quote
-    print("\n3. Inspirational Quote API:")
+    print("\n2. Inspirational Quote API:")
     quote = client.get_inspirational_quote()
     if quote:
         print(f"   ✓ \"{quote['text'][:60]}...\" - {quote['author']}")
@@ -337,7 +330,7 @@ def test_external_apis():
         print("   ✗ Failed to fetch inspirational quote")
     
     # Test Chuck Norris joke
-    print("\n4. Chuck Norris Joke API:")
+    print("\n3. Chuck Norris Joke API:")
     joke = client.get_chuck_norris_joke()
     if joke:
         print(f"   ✓ {joke[:80]}...")
@@ -345,7 +338,7 @@ def test_external_apis():
         print("   ✗ Failed to fetch Chuck Norris joke")
     
     # Test random content
-    print("\n5. Random Content:")
+    print("\n4. Random Content:")
     for _ in range(3):
         content = client.get_random_content()
         if content:
@@ -355,7 +348,7 @@ def test_external_apis():
                 print(f"   • Quote: \"{content['content'][:50]}...\" - {content.get('author', 'Unknown')}")
     
     # Test message generation
-    print("\n6. Message Generation:")
+    print("\n5. Message Generation:")
     print("   Without ollama:")
     msg = generate_external_message(use_ollama=False)
     print(f"   {msg}")
