@@ -16,10 +16,11 @@
     },
     "message_sources": {
       "weights": {
-        "default": 40,
+        "default": 30,
         "jw": 20,
-        "joke": 20,
-        "quote": 20
+        "joke": 15,
+        "quote": 3,
+        "stoic": 32
       },
       "jw": {
         "enabled": true,
@@ -44,17 +45,17 @@
       "morning": {
         "hours": [5, 12],
         "message_style": "energizing",
-        "prefer_sources": ["default", "jw", "quote"]
+        "prefer_sources": ["default", "jw", "quote", "stoic"]
       },
       "afternoon": {
         "hours": [12, 17],
         "message_style": "motivating",
-        "prefer_sources": ["default", "joke", "quote"]
+        "prefer_sources": ["default", "stoic", "joke", "quote"]
       },
       "evening": {
         "hours": [17, 24, 0, 5],
         "message_style": "supportive",
-        "prefer_sources": ["default", "jw", "joke"]
+        "prefer_sources": ["default", "stoic", "jw", "joke"]
       }
     },
     "events": {

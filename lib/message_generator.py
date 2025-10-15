@@ -49,6 +49,7 @@ try:
     from lib.ollama_models import OllamaModelManager, generate_with_model
     from lib.config import get_config
     from lib.rate_limiter import should_show_jw_content, mark_jw_content_shown
+    from lib.stoic_quotes import generate_stoic_message, get_fallback_stoic_message
     API_FEATURES_AVAILABLE = True
 except ImportError:
     API_FEATURES_AVAILABLE = False
@@ -297,13 +298,14 @@ def generate_message(
             message_source = random.choice(sources) if sources else 'default'
         elif message_source is None:
             # Fallback to default weighted selection
-            sources = ['default'] * 4  # 40% chance
+            sources = ['default'] * 3  # 30% chance
             if API_FEATURES_AVAILABLE:
                 # Only add JW if not rate limited
                 if should_show_jw_content():
                     sources.extend(['jw'] * 2)  # 20% chance
                 sources.extend(['joke'] * 2)  # 20% chance
-                sources.extend(['quote'] * 2)  # 20% chance
+                sources.extend(['quote'] * 1)  # 10% chance
+                sources.extend(['stoic'] * 2)  # 20% chance
             message_source = random.choice(sources)
         
         # Try to generate from selected source
@@ -321,6 +323,10 @@ def generate_message(
             message = generate_external_message(event_type, content_type='quote', use_ollama=use_ollama)
             if message:
                 return _apply_config_formatting(message, config)
+        elif message_source == 'stoic':
+            message = generate_stoic_message(event_type, use_ollama=use_ollama)
+            if message:
+                return _apply_config_formatting(message, config)
         # If source is 'default' or previous attempts failed, continue to default behavior
     
     # Default behavior: use ollama or fallback messages
@@ -332,6 +338,8 @@ def generate_message(
     # Fall back to pre-written messages or external fallbacks
     if API_FEATURES_AVAILABLE and message_source in ['joke', 'quote']:
         message = get_fallback_external_message(message_source)
+    elif API_FEATURES_AVAILABLE and message_source == 'stoic':
+        message = get_fallback_stoic_message()
     else:
         message = get_fallback_message(event_type)
     
@@ -433,7 +441,14 @@ if __name__ == "__main__":
         print(f"  Without ollama: {msg}")
         msg = generate_message("SessionStart", message_source="quote", use_ollama=True)
         print(f"  With ollama: {msg}")
-        
+
+        # Test stoic quotes
+        print("\nStoic Quotes:")
+        msg = generate_message("SessionStart", message_source="stoic", use_ollama=False)
+        print(f"  Without ollama: {msg}")
+        msg = generate_message("SessionStart", message_source="stoic", use_ollama=True)
+        print(f"  With ollama: {msg}")
+
         # Test random selection
         print("\n\nRandom source selection (5 samples):")
         for i in range(5):
