@@ -78,7 +78,7 @@ The following features have been planned but not yet implemented:
   - Add model rotation logic in `message_generator.py`
   - Keep efficiency in mind - use lightweight models
   - Consider caching model list to avoid repeated `ollama list` calls
-  - Suggested models: phi3.5:3.8b, mistral:7b-instruct
+  - Suggested models: llama3.2:latest, mistral:7b-instruct
 
 ### 2. External API Integration
 - **Goal**: Fetch content from external sources and enhance with ollama

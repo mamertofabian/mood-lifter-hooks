@@ -183,7 +183,7 @@ class JokeQuoteClient:
 def enhance_with_ollama(
     content: Dict[str, str],
     event_type: str = "SessionStart",
-    model: str = "phi3.5:3.8b"
+    model: str = "llama3.2:latest"
 ) -> str:
     """
     Enhance joke or quote with ollama for developer context.

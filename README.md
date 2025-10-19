@@ -184,7 +184,7 @@ allowed-tools: Bash(python3:*)
 ### Configure Ollama Models
 Edit scripts to prefer different models:
 ```python
-preferred_models = ['gemma2:2b', 'phi3.5:3.8b', 'your-model:tag']
+preferred_models = ['gemma2:2b', 'llama3.2:latest', 'your-model:tag']
 ```
 
 ## 🚦 Prerequisites
@@ -200,7 +200,7 @@ preferred_models = ['gemma2:2b', 'phi3.5:3.8b', 'your-model:tag']
   curl -sSL https://ollama.ai/install.sh | bash
   
   # Pull lightweight model
-  ollama pull phi3.5:3.8b
+  ollama pull llama3.2:latest
   ```
 
 ## 🐛 Troubleshooting

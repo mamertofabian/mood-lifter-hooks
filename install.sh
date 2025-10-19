@@ -129,6 +129,12 @@ if [ "$INSTALL_COMMANDS" = true ] || [ "$INSTALL_HOOKS" = true ]; then
     cp -r "$SCRIPT_DIR/lib" "$USER_CLAUDE_DIR/" 2>/dev/null && \
         echo -e "${GREEN}✓ Lib modules installed (enables JW text, jokes, quotes)${NC}" || \
         echo -e "${YELLOW}⚠ Could not install lib modules${NC}"
+
+    # Copy config folder for defaults
+    echo -e "${YELLOW}Installing configuration files...${NC}"
+    cp -r "$SCRIPT_DIR/config" "$USER_CLAUDE_DIR/" 2>/dev/null && \
+        echo -e "${GREEN}✓ Configuration files installed${NC}" || \
+        echo -e "${YELLOW}⚠ Could not install config files${NC}"
     
     # Make scripts executable
     chmod +x "$USER_CLAUDE_DIR"/*.py 2>/dev/null || true
@@ -217,7 +223,6 @@ if 'hooks' not in settings:
 mood_lifter_hooks = {
     "SessionStart": [
         {
-            "matcher": "*",
             "hooks": [
                 {
                     "type": "command",

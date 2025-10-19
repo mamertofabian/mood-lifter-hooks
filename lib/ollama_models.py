@@ -18,7 +18,7 @@ class OllamaModelManager:
     
     # Recommended models for fast, efficient message generation
     RECOMMENDED_MODELS = [
-        "phi3.5:3.8b",      # Microsoft's efficient model
+        "llama3.2:latest",      # Microsoft's efficient model
         "mistral:7b-instruct",  # Good for instructions
         "llama3.2:1b",      # Very fast, lightweight
         "gemma2:2b",        # Google's small model
@@ -26,7 +26,7 @@ class OllamaModelManager:
     ]
     
     # Fallback if no recommended models are available
-    DEFAULT_MODEL = "phi3.5:3.8b"
+    DEFAULT_MODEL = "llama3.2:latest"
     
     def __init__(self, cache_ttl_minutes: int = 30):
         """

@@ -183,7 +183,7 @@ class JWDailyTextClient:
 def create_developer_encouragement(
     daily_text: Dict, 
     use_ollama: bool = True,
-    model: str = "phi3.5:3.8b"
+    model: str = "llama3.2:latest"
 ) -> str:
     """
     Create spiritual encouragement from daily text.

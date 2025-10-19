@@ -14,9 +14,13 @@ import yaml
 
 class Config:
     """Configuration manager for Mood Lifter Hooks."""
-    
-    # Default paths
-    DEFAULT_CONFIG_PATH = Path(__file__).parent.parent / "config" / "defaults.json"
+
+    # Default paths - try multiple locations
+    DEFAULT_CONFIG_PATHS = [
+        Path(__file__).parent.parent / "config" / "defaults.json",  # Relative to lib folder
+        Path.home() / ".claude" / "config" / "defaults.json",  # Copied to ~/.claude
+        Path("/home/atomrem/projects/codefrost-dev/mood-lifter-hooks/config/defaults.json"),  # Project directory
+    ]
     USER_CONFIG_DIR = Path.home() / ".mood-lifter-hooks"
     USER_CONFIG_PATHS = [
         USER_CONFIG_DIR / "config.json",
@@ -41,15 +45,19 @@ class Config:
     
     def _load_defaults(self):
         """Load default configuration."""
-        if self.DEFAULT_CONFIG_PATH.exists():
-            try:
-                with open(self.DEFAULT_CONFIG_PATH, 'r') as f:
-                    self.config = json.load(f)
-            except Exception as e:
-                print(f"Warning: Failed to load default config: {e}")
-                self.config = self._get_fallback_config()
-        else:
-            self.config = self._get_fallback_config()
+        # Try multiple locations for the default config
+        for config_path in self.DEFAULT_CONFIG_PATHS:
+            if config_path.exists():
+                try:
+                    with open(config_path, 'r') as f:
+                        self.config = json.load(f)
+                    return
+                except Exception as e:
+                    print(f"Warning: Failed to load default config from {config_path}: {e}")
+                    continue
+
+        # If no config found, use fallback
+        self.config = self._get_fallback_config()
     
     def _get_fallback_config(self) -> Dict[str, Any]:
         """Get minimal fallback configuration."""
@@ -59,7 +67,7 @@ class Config:
                 "ollama": {
                     "enabled": True,
                     "use_variety": False,
-                    "preferred_models": ["phi3.5:3.8b"],
+                    "preferred_models": ["llama3.2:latest"],
                     "timeout": 5
                 },
                 "message_sources": {
@@ -166,7 +174,7 @@ class Config:
     
     def get_preferred_models(self) -> List[str]:
         """Get list of preferred ollama models."""
-        return self.get("ollama.preferred_models", ["phi3.5:3.8b"])
+        return self.get("ollama.preferred_models", ["llama3.2:latest"])
     
     def get_ollama_timeout(self) -> int:
         """Get ollama timeout in seconds."""
@@ -365,7 +373,7 @@ def test_config():
         "mood_lifter_hooks": {
             "ollama": {
                 "use_variety": False,
-                "preferred_models": ["phi3.5:3.8b"]
+                "preferred_models": ["llama3.2:latest"]
             },
             "message_sources": {
                 "weights": {

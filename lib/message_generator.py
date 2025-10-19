@@ -58,7 +58,7 @@ except ImportError:
         def is_enabled(self): return True
         def is_ollama_enabled(self): return True
         def use_ollama_variety(self): return False
-        def get_preferred_models(self): return ["phi3.5:3.8b"]
+        def get_preferred_models(self): return ["llama3.2:latest"]
         def get_ollama_timeout(self): return 5
         def get_message_source_weights(self): return {"default": 100}
         def is_jw_enabled(self): return False
@@ -124,7 +124,12 @@ OLLAMA_PROMPTS = {
         "evening": "Generate a brief, encouraging evening message for a developer working late. Include one emoji. Maximum 15 words. Be supportive, appreciative, and lightly humorous. Only output the message, no metadata.",
     },
     "Stop": {
-        "default": "Generate a brief, congratulatory message for a developer finishing their coding work. Include one emoji. Maximum 15 words. Celebrate their effort with humor and positivity. Only output the message, no metadata.",
+        # Rotate through different prompt styles to increase variety
+        "celebrate": "Write a short celebration message for a developer who just finished coding. One emoji. Max 15 words. Be creative and avoid clichés. Only the message.",
+        "acknowledge": "Write a brief acknowledgment for a developer completing their work. One emoji. Max 15 words. Be genuine and specific. Only the message.",
+        "encourage": "Write a short encouraging note for a developer who just finished a coding session. One emoji. Max 15 words. Be warm and supportive. Only the message.",
+        "humor": "Write a funny, light-hearted message for a developer finishing their work. One emoji. Max 15 words. Be witty and playful. Only the message.",
+        "achievement": "Write a brief achievement message for a developer completing their coding. One emoji. Max 15 words. Focus on their accomplishment. Only the message.",
     },
     "Notification": {
         "default": "Generate a brief, encouraging message for a developer in the middle of coding. Include one emoji. Maximum 15 words. Be supportive, motivating, and add some humor. Only output the message, no metadata.",
@@ -167,10 +172,14 @@ def generate_with_ollama(event_type: str, model: Optional[str] = None, use_varie
         
         # Get appropriate prompt based on event type and time
         prompts = OLLAMA_PROMPTS.get(event_type, {})
-        
+
         if event_type == "SessionStart":
             time_period = get_time_period()
             prompt = prompts.get(time_period, prompts.get("default", ""))
+        elif event_type == "Stop" and len(prompts) > 1:
+            # Randomly select from different Stop prompt styles for variety
+            prompt_key = random.choice(list(prompts.keys()))
+            prompt = prompts[prompt_key]
         else:
             prompt = prompts.get("default", "")
         
@@ -182,7 +191,7 @@ def generate_with_ollama(event_type: str, model: Optional[str] = None, use_varie
             manager = get_model_manager()
             selected_model = manager.select_model()
         else:
-            selected_model = model or "phi3.5:3.8b"
+            selected_model = model or "llama3.2:latest"
         
         # Call ollama with timeout
         result = subprocess.run(

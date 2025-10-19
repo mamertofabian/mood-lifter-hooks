@@ -5,7 +5,7 @@
       "enabled": true,
       "use_variety": true,
       "preferred_models": [
-        "phi3.5:3.8b",
+        "llama3.2:latest",
         "mistral:7b-instruct",
         "llama3.2:1b",
         "gemma2:2b",

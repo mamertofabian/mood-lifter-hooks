@@ -61,7 +61,7 @@ def generate_joke_with_ollama():
             return None
         
         # Select lightweight model
-        preferred_models = ['phi3.5:3.8b', 'mistral:7b-instruct', 'llama3.2:1b', 'gemma2:2b']
+        preferred_models = ['llama3.2:latest', 'mistral:7b-instruct', 'llama3.2:1b', 'gemma2:2b']
         model = next((m for m in preferred_models if any(m.startswith(pm.split(':')[0]) for pm in models)), models[0])
         
         # Generate joke

@@ -108,7 +108,7 @@ def generate_developer_encouragement(scripture: str, text: str) -> str:
             return random.choice(FALLBACK_ENCOURAGEMENT)
         
         # Select lightweight model
-        preferred_models = ['phi3.5:3.8b', 'mistral:7b-instruct', 'llama3.2:1b']
+        preferred_models = ['llama3.2:latest', 'mistral:7b-instruct', 'llama3.2:1b']
         model = next((m for m in preferred_models if any(m.startswith(pm.split(':')[0]) for pm in models)), models[0])
         
         # Generate encouragement

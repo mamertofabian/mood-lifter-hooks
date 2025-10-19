@@ -237,7 +237,7 @@ def get_developer_stoic_wisdom() -> str:
 def enhance_stoic_quote_with_ollama(
     quote: Dict[str, str],
     event_type: str = "SessionStart",
-    model: str = "phi3.5:3.8b"
+    model: str = "llama3.2:latest"
 ) -> str:
     """
     Enhance stoic quote with ollama for developer context.
@@ -286,7 +286,7 @@ Only output the message, no metadata."""
 def generate_pure_stoic_wisdom(
     event_type: str = "SessionStart",
     theme: Optional[str] = None,
-    model: str = "phi3.5:3.8b"
+    model: str = "llama3.2:latest"
 ) -> Optional[str]:
     """
     Generate original stoic wisdom from scratch using ollama.

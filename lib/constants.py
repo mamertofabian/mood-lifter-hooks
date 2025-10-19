@@ -50,10 +50,10 @@ class Defaults:
     CONFIG_FILE = "~/.claude-code/mood-lifter/config.json"
     LAST_SHOWN_FILE = "~/.claude-code/mood-lifter/last_shown.json"
     OLLAMA_MODELS = [
-        "phi3.5:3.8b",
+        "llama3.2:latest",
         "mistral:7b-instruct",
         "llama3.2:1b",
         "gemma2:2b",
         "qwen2.5:0.5b"
     ]
-    FALLBACK_MODEL = "phi3.5:3.8b"
+    FALLBACK_MODEL = "llama3.2:latest"
