@@ -42,17 +42,12 @@ except ImportError:
         MAX_MESSAGE_LENGTH = 200
         MIN_MESSAGE_LENGTH = 10
 
-# Import API integrations (these will be available once installed)
+# Try to import config first (it doesn't require requests)
 try:
-    from lib.jw_daily_text import generate_jw_message
-    from lib.external_apis import generate_external_message, get_fallback_external_message
-    from lib.ollama_models import OllamaModelManager, generate_with_model
-    from lib.config import get_config
-    from lib.rate_limiter import should_show_jw_content, mark_jw_content_shown
-    from lib.stoic_quotes import generate_stoic_message, get_fallback_stoic_message
-    API_FEATURES_AVAILABLE = True
+    from lib.config import get_config as _get_config_real
+    CONFIG_AVAILABLE = True
 except ImportError:
-    API_FEATURES_AVAILABLE = False
+    CONFIG_AVAILABLE = False
     # Minimal config fallback
     class DummyConfig:
         def is_enabled(self): return True
@@ -68,9 +63,39 @@ except ImportError:
         def get_max_message_length(self): return 120
         def include_emojis(self): return True
         def suppress_errors(self): return True
-    
-    def get_config():
+
+    def _get_config_real():
         return DummyConfig()
+
+# Import API integrations (these require requests module)
+try:
+    from lib.jw_daily_text import generate_jw_message
+    from lib.external_apis import generate_external_message, get_fallback_external_message
+    from lib.rate_limiter import should_show_jw_content, mark_jw_content_shown
+    JW_AND_EXTERNAL_APIS_AVAILABLE = True
+except ImportError:
+    JW_AND_EXTERNAL_APIS_AVAILABLE = False
+
+# Import stoic quotes (doesn't require requests)
+try:
+    from lib.stoic_quotes import generate_stoic_message, get_fallback_stoic_message
+    STOIC_AVAILABLE = True
+except ImportError:
+    STOIC_AVAILABLE = False
+
+# Import ollama model manager
+try:
+    from lib.ollama_models import OllamaModelManager, generate_with_model
+    OLLAMA_MANAGER_AVAILABLE = True
+except ImportError:
+    OLLAMA_MANAGER_AVAILABLE = False
+
+# For backwards compatibility
+API_FEATURES_AVAILABLE = JW_AND_EXTERNAL_APIS_AVAILABLE
+
+def get_config():
+    """Get configuration, using real config if available, otherwise dummy."""
+    return _get_config_real()
 
 # Global model manager instance
 _model_manager = None
@@ -186,8 +211,8 @@ def generate_with_ollama(event_type: str, model: Optional[str] = None, use_varie
         if not prompt:
             return None
         
-        # Use model manager for selection if API features available
-        if API_FEATURES_AVAILABLE and use_variety and model is None:
+        # Use model manager for selection if ollama manager available
+        if OLLAMA_MANAGER_AVAILABLE and use_variety and model is None:
             manager = get_model_manager()
             selected_model = manager.select_model()
         else:
@@ -272,71 +297,81 @@ def generate_message(
         use_ollama = config.is_ollama_enabled() if config else True
     if use_variety is None:
         use_variety = config.use_ollama_variety() if config else True
-    
-    # If API features are available and source is specified or randomly selected
-    if API_FEATURES_AVAILABLE:
-        # Special handling for SessionStart: Always try JW content first if not rate limited
-        if event_type == "SessionStart" and message_source is None:
-            # Check if JW content should be shown (rate limiting)
-            if should_show_jw_content():
-                # Try JW content first for session start
-                message_source = 'jw'
-            else:
-                # JW content is rate limited, use normal selection
-                message_source = None
-        
-        # Determine message source if not already set
-        if message_source is None and config:
-            # Use configuration-based weighted selection
-            weights = config.get_message_source_weights()
-            sources = []
-            for source, weight in weights.items():
-                # Skip JW if it's rate limited
-                if source == 'jw' and not should_show_jw_content():
-                    continue
-                sources.extend([source] * weight)
-            
-            # Apply time preferences if configured
-            if event_type == "SessionStart":
-                preferred = config.get_preferred_sources_for_time()
-                # Boost preferred sources
-                for source in preferred:
-                    if source in weights and (source != 'jw' or should_show_jw_content()):
-                        sources.extend([source] * 10)
-            
-            message_source = random.choice(sources) if sources else 'default'
-        elif message_source is None:
-            # Fallback to default weighted selection
-            sources = ['default'] * 3  # 30% chance
-            if API_FEATURES_AVAILABLE:
-                # Only add JW if not rate limited
-                if should_show_jw_content():
-                    sources.extend(['jw'] * 2)  # 20% chance
-                sources.extend(['joke'] * 2)  # 20% chance
-                sources.extend(['quote'] * 1)  # 10% chance
-                sources.extend(['stoic'] * 2)  # 20% chance
-            message_source = random.choice(sources)
-        
-        # Try to generate from selected source
-        if message_source == 'jw' and (not config or config.is_jw_enabled()):
-            message = generate_jw_message(event_type, use_ollama=use_ollama)
-            if message:
-                # Mark JW content as shown for rate limiting
-                mark_jw_content_shown()
-                return _apply_config_formatting(message, config)
-        elif message_source == 'joke' and (not config or config.is_external_apis_enabled()):
-            message = generate_external_message(event_type, content_type='joke', use_ollama=use_ollama)
-            if message:
-                return _apply_config_formatting(message, config)
-        elif message_source == 'quote' and (not config or config.is_external_apis_enabled()):
-            message = generate_external_message(event_type, content_type='quote', use_ollama=use_ollama)
-            if message:
-                return _apply_config_formatting(message, config)
-        elif message_source == 'stoic':
-            message = generate_stoic_message(event_type, use_ollama=use_ollama)
-            if message:
-                return _apply_config_formatting(message, config)
-        # If source is 'default' or previous attempts failed, continue to default behavior
+
+    # Special handling for SessionStart: Always try JW content first if not rate limited
+    if JW_AND_EXTERNAL_APIS_AVAILABLE and event_type == "SessionStart" and message_source is None:
+        # Check if JW content should be shown (rate limiting)
+        if should_show_jw_content():
+            # Try JW content first for session start
+            message_source = 'jw'
+        else:
+            # JW content is rate limited, use normal selection
+            message_source = None
+
+    # Determine message source if not already set
+    if message_source is None and config:
+        # Use configuration-based weighted selection
+        weights = config.get_message_source_weights()
+        sources = []
+        for source, weight in weights.items():
+            # Skip sources that aren't available
+            if source == 'jw' and (not JW_AND_EXTERNAL_APIS_AVAILABLE or not should_show_jw_content()):
+                continue
+            if source in ['joke', 'quote'] and not JW_AND_EXTERNAL_APIS_AVAILABLE:
+                continue
+            if source == 'stoic' and not STOIC_AVAILABLE:
+                continue
+            sources.extend([source] * weight)
+
+        # Apply time preferences if configured
+        if event_type == "SessionStart":
+            preferred = config.get_preferred_sources_for_time()
+            # Boost preferred sources
+            for source in preferred:
+                if source in weights:
+                    # Check availability before boosting
+                    if source == 'jw' and (not JW_AND_EXTERNAL_APIS_AVAILABLE or not should_show_jw_content()):
+                        continue
+                    if source in ['joke', 'quote'] and not JW_AND_EXTERNAL_APIS_AVAILABLE:
+                        continue
+                    if source == 'stoic' and not STOIC_AVAILABLE:
+                        continue
+                    sources.extend([source] * 10)
+
+        message_source = random.choice(sources) if sources else 'default'
+    elif message_source is None:
+        # Fallback to default weighted selection
+        sources = ['default'] * 3  # 30% chance
+        # Only add sources that are available
+        if JW_AND_EXTERNAL_APIS_AVAILABLE and should_show_jw_content():
+            sources.extend(['jw'] * 2)  # 20% chance
+        if JW_AND_EXTERNAL_APIS_AVAILABLE:
+            sources.extend(['joke'] * 2)  # 20% chance
+            sources.extend(['quote'] * 1)  # 10% chance
+        if STOIC_AVAILABLE:
+            sources.extend(['stoic'] * 2)  # 20% chance
+        message_source = random.choice(sources)
+
+    # Try to generate from selected source
+    if message_source == 'jw' and JW_AND_EXTERNAL_APIS_AVAILABLE and (not config or config.is_jw_enabled()):
+        message = generate_jw_message(event_type, use_ollama=use_ollama)
+        if message:
+            # Mark JW content as shown for rate limiting
+            mark_jw_content_shown()
+            return _apply_config_formatting(message, config)
+    elif message_source == 'joke' and JW_AND_EXTERNAL_APIS_AVAILABLE and (not config or config.is_external_apis_enabled()):
+        message = generate_external_message(event_type, content_type='joke', use_ollama=use_ollama)
+        if message:
+            return _apply_config_formatting(message, config)
+    elif message_source == 'quote' and JW_AND_EXTERNAL_APIS_AVAILABLE and (not config or config.is_external_apis_enabled()):
+        message = generate_external_message(event_type, content_type='quote', use_ollama=use_ollama)
+        if message:
+            return _apply_config_formatting(message, config)
+    elif message_source == 'stoic' and STOIC_AVAILABLE:
+        message = generate_stoic_message(event_type, use_ollama=use_ollama)
+        if message:
+            return _apply_config_formatting(message, config)
+    # If source is 'default' or previous attempts failed, continue to default behavior
     
     # Default behavior: use ollama or fallback messages
     if use_ollama:
@@ -345,9 +380,9 @@ def generate_message(
             return _apply_config_formatting(message, config)
     
     # Fall back to pre-written messages or external fallbacks
-    if API_FEATURES_AVAILABLE and message_source in ['joke', 'quote']:
+    if JW_AND_EXTERNAL_APIS_AVAILABLE and message_source in ['joke', 'quote']:
         message = get_fallback_external_message(message_source)
-    elif API_FEATURES_AVAILABLE and message_source == 'stoic':
+    elif STOIC_AVAILABLE and message_source == 'stoic':
         message = get_fallback_stoic_message()
     else:
         message = get_fallback_message(event_type)

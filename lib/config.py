@@ -9,7 +9,13 @@ import os
 import sys
 from pathlib import Path
 from typing import Dict, Any, Optional, List
-import yaml
+
+# Optional yaml support
+try:
+    import yaml
+    YAML_AVAILABLE = True
+except ImportError:
+    YAML_AVAILABLE = False
 
 
 class Config:
@@ -98,20 +104,23 @@ class Config:
     def _load_user_config(self, path: Path):
         """
         Load user configuration and merge with defaults.
-        
+
         Args:
             path: Path to user configuration file
         """
         try:
             with open(path, 'r') as f:
                 if path.suffix in ['.yaml', '.yml']:
+                    if not YAML_AVAILABLE:
+                        print(f"Warning: YAML support not available, skipping {path}")
+                        return
                     user_config = yaml.safe_load(f)
                 else:
                     user_config = json.load(f)
-            
+
             # Merge user config with defaults
             self.config = self._merge_configs(self.config, user_config)
-            
+
         except Exception as e:
             print(f"Warning: Failed to load user config from {path}: {e}")
     
@@ -296,12 +305,15 @@ class Config:
         try:
             with open(path, 'w') as f:
                 if path.suffix in ['.yaml', '.yml']:
+                    if not YAML_AVAILABLE:
+                        print(f"Error: YAML support not available, cannot save to {path}")
+                        return
                     yaml.dump(config_dict, f, default_flow_style=False, indent=2)
                 else:
                     json.dump(config_dict, f, indent=2)
-            
+
             print(f"Configuration saved to {path}")
-            
+
         except Exception as e:
             print(f"Error saving configuration: {e}")
 
