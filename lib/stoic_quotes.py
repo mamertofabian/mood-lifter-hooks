@@ -183,18 +183,18 @@ STOIC_QUOTES = [
 ]
 
 
-# Developer-specific stoic principles
-DEVELOPER_STOIC_WISDOM = [
-    "The bug is not against you; it simply is. Your reaction determines your progress.",
-    "Control your code review emotions, not the reviewer's comments.",
-    "Production issues are inevitable. Your calm response is optional.",
-    "The merge conflict doesn't care about your frustration. Handle it with clarity.",
-    "Master your git rebase anxiety, and you master your workflow.",
-    "The failing test reveals truth. Your anger at it reveals weakness.",
-    "Your deadline does not control your inner peace. Your discipline does.",
-    "The legacy code is what it is. Your approach to it defines you.",
-    "Stack Overflow didn't write bad answers. Your interpretation creates your experience.",
-    "The compiler's errors are teachers, not enemies. Learn without anger.",
+# General stoic principles for daily life
+GENERAL_STOIC_WISDOM = [
+    "The obstacle is not against you; it simply is. Your reaction determines your growth.",
+    "Control your emotions, not others' opinions.",
+    "Difficulties are inevitable. Your calm response is optional.",
+    "The challenge doesn't care about your frustration. Handle it with clarity.",
+    "Master your anxiety, and you master your life.",
+    "Failure reveals truth. Your anger at it reveals weakness.",
+    "Your circumstances do not control your inner peace. Your discipline does.",
+    "The situation is what it is. Your approach to it defines you.",
+    "Others' words don't create your reality. Your interpretation does.",
+    "Life's lessons are teachers, not enemies. Learn without anger.",
 ]
 
 
@@ -224,14 +224,14 @@ def get_stoic_quote(theme: Optional[str] = None) -> Dict[str, str]:
     }
 
 
-def get_developer_stoic_wisdom() -> str:
+def get_general_stoic_wisdom() -> str:
     """
-    Get a random developer-specific stoic wisdom statement.
+    Get a random general stoic wisdom statement.
 
     Returns:
-        A stoic principle adapted for developers
+        A stoic principle for daily life
     """
-    return random.choice(DEVELOPER_STOIC_WISDOM)
+    return random.choice(GENERAL_STOIC_WISDOM)
 
 
 def enhance_stoic_quote_with_ollama(
@@ -240,47 +240,28 @@ def enhance_stoic_quote_with_ollama(
     model: str = "llama3.2:latest"
 ) -> str:
     """
-    Enhance stoic quote with ollama for developer context.
+    Present stoic quote in a clean, readable format.
+    No developer-specific adjustments - just the raw wisdom.
 
     Args:
         quote: Quote dictionary with 'text' and 'author'
         event_type: Type of event
-        model: Ollama model to use
+        model: Ollama model to use (not used, kept for compatibility)
 
     Returns:
-        Enhanced message
+        Formatted quote
     """
     if not quote:
-        return "🧘 Stay calm and code on."
+        return "🧘 Stay calm and carry on."
 
     quote_text = quote.get("text", "")
     author = quote.get("author", "")
 
-    try:
-        prompt = f"""Here's a stoic quote: "{quote_text}" - {author}
-
-Create a brief, encouraging message for a developer based on this stoic wisdom.
-Apply it to coding challenges and maintaining calm while programming.
-Maximum 20 words. Include one zen/calm emoji (🧘, 💭, 🌊, ⚖️, or 🎯).
-Make it practical and directly applicable to a developer's work.
-Only output the message, no metadata."""
-
-        result = subprocess.run(
-            ["ollama", "run", model, "--verbose=false"],
-            input=prompt,
-            text=True,
-            capture_output=True,
-            timeout=Timeouts.OLLAMA_QUICK
-        )
-
-        if result.returncode == 0 and result.stdout:
-            message = result.stdout.strip().split('\n')[0].strip()
-            return message
-    except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
-        pass
-
-    # Fallback: return the quote with emoji
-    return f"🧘 \"{quote_text[:80]}...\" - {author}"
+    # Return the quote as-is with a simple emoji
+    if len(quote_text) > 100:
+        return f"🧘 \"{quote_text[:97]}...\" - {author}"
+    else:
+        return f"🧘 \"{quote_text}\" - {author}"
 
 
 def generate_pure_stoic_wisdom(
@@ -290,6 +271,7 @@ def generate_pure_stoic_wisdom(
 ) -> Optional[str]:
     """
     Generate original stoic wisdom from scratch using ollama.
+    Raw philosophical wisdom - not developer-specific.
 
     Args:
         event_type: Type of event
@@ -302,21 +284,21 @@ def generate_pure_stoic_wisdom(
     # Build theme-specific context
     theme_context = ""
     if theme == "anger":
-        theme_context = "Focus on managing anger and maintaining composure when facing frustrating code issues."
+        theme_context = "Focus on managing anger and maintaining composure."
     elif theme == "control":
-        theme_context = "Focus on what developers can control versus what they cannot in their work."
+        theme_context = "Focus on what we can control versus what we cannot."
     elif theme == "peace":
-        theme_context = "Focus on finding inner peace and tranquility while coding."
+        theme_context = "Focus on finding inner peace and tranquility."
     elif theme == "obstacles":
-        theme_context = "Focus on viewing coding obstacles as opportunities for growth."
+        theme_context = "Focus on viewing obstacles as opportunities for growth."
     else:
-        theme_context = "Focus on stoic wisdom applicable to software development challenges."
+        theme_context = "Focus on timeless stoic wisdom."
 
-    prompt = f"""Generate original stoic wisdom for a software developer. {theme_context}
+    prompt = f"""Generate original stoic wisdom. {theme_context}
 
-Write a brief, practical stoic principle that applies to coding and development work.
+Write a brief, practical stoic principle for daily life.
 Maximum 20 words. Include one zen/calm emoji (🧘, 💭, 🌊, ⚖️, or 🎯).
-Make it sound like wisdom from Marcus Aurelius, Epictetus, or Seneca, but applied to modern development.
+Make it sound like wisdom from Marcus Aurelius, Epictetus, or Seneca.
 Do not quote existing stoics - create new wisdom in their style.
 Only output the wisdom statement, no metadata or attribution."""
 
@@ -342,7 +324,7 @@ def generate_stoic_message(
     event_type: str = "SessionStart",
     use_ollama: bool = True,
     theme: Optional[str] = None,
-    use_developer_wisdom: bool = False,
+    use_general_wisdom: bool = False,
     pure_generation_ratio: float = 0.4
 ) -> str:
     """
@@ -352,15 +334,15 @@ def generate_stoic_message(
         event_type: Type of event
         use_ollama: Whether to use ollama (for enhancement or pure generation)
         theme: Optional theme filter
-        use_developer_wisdom: If True, use developer-specific stoic wisdom
+        use_general_wisdom: If True, use general stoic wisdom statements
         pure_generation_ratio: Ratio of pure LLM generation vs quote-based (0.0-1.0)
 
     Returns:
         Stoic wisdom message
     """
-    if use_developer_wisdom:
-        # Use developer-specific wisdom directly (doesn't need ollama)
-        wisdom = get_developer_stoic_wisdom()
+    if use_general_wisdom:
+        # Use general wisdom directly (doesn't need ollama)
+        wisdom = get_general_stoic_wisdom()
         return f"🧘 {wisdom}"
 
     # Decide whether to use pure LLM generation or quote-based approach

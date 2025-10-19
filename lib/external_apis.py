@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 External API integrations for jokes and quotes.
-Provides dad jokes, developer quotes, and programming wisdom.
+Provides general jokes and inspirational quotes.
 """
 
 import random
@@ -32,9 +32,9 @@ class JokeQuoteClient:
         # Reliable quote APIs
         self.zenquotes_api = "https://zenquotes.io/api/random"
         self.quotegarden_api = "https://quote-garden.herokuapp.com/api/v3/quotes/random"
-        # Better programming joke APIs (Heroku one is often down)
-        self.programming_joke_api = "https://v2.jokeapi.dev/joke/Programming"
-        self.official_joke_api = "https://official-joke-api.appspot.com/jokes/programming/random"
+        # General joke APIs
+        self.general_joke_api = "https://v2.jokeapi.dev/joke/Miscellaneous,Pun"
+        self.official_joke_api = "https://official-joke-api.appspot.com/jokes/random"
     
     def get_dad_joke(self) -> Optional[str]:
         """
@@ -51,15 +51,15 @@ class JokeQuoteClient:
         
         return None
     
-    def get_programming_joke(self) -> Optional[str]:
+    def get_general_joke(self) -> Optional[str]:
         """
-        Fetch a programming joke from multiple sources.
-        
+        Fetch a general joke from multiple sources.
+
         Returns:
             Joke text or None on error
         """
-        # Try JokeAPI first (best quality)
-        data = self.api_client.get(self.programming_joke_api + "?safe-mode")
+        # Try JokeAPI first (best quality) - miscellaneous and puns only
+        data = self.api_client.get(self.general_joke_api + "?safe-mode")
         if data and isinstance(data, dict):
             if data.get("type") == "single":
                 return data.get("joke", "")
@@ -68,17 +68,15 @@ class JokeQuoteClient:
                 delivery = data.get("delivery", "")
                 if setup and delivery:
                     return f"{setup} {delivery}"
-        
-        # Fallback to Official Joke API
+
+        # Fallback to Official Joke API (random jokes)
         data = self.api_client.get(self.official_joke_api)
-        if data and isinstance(data, list) and len(data) > 0:
-            joke = data[0]
-            if isinstance(joke, dict):
-                setup = joke.get("setup", "")
-                punchline = joke.get("punchline", "")
-                if setup and punchline:
-                    return f"{setup} {punchline}"
-        
+        if isinstance(data, dict):
+            setup = data.get("setup", "")
+            punchline = data.get("punchline", "")
+            if setup and punchline:
+                return f"{setup} {punchline}"
+
         return None
     
     def get_inspirational_quote(self) -> Optional[Dict[str, str]]:
@@ -114,8 +112,8 @@ class JokeQuoteClient:
     
     def get_chuck_norris_joke(self) -> Optional[str]:
         """
-        Fetch a Chuck Norris joke (programming category).
-        
+        Fetch a general Chuck Norris joke.
+
         Returns:
             Joke text or None on error
         """
@@ -138,11 +136,11 @@ class JokeQuoteClient:
             Dictionary with 'content', 'type', and optionally 'author'
         """
         if content_type == "joke":
-            sources = ["dad_joke", "programming_joke", "chuck_norris"]
+            sources = ["dad_joke", "general_joke"]
         elif content_type == "quote":
             sources = ["inspirational_quote"]
         else:
-            sources = ["dad_joke", "programming_joke", "inspirational_quote", "chuck_norris"]
+            sources = ["dad_joke", "general_joke", "inspirational_quote"]
         
         # Try sources in random order
         random.shuffle(sources)
@@ -154,8 +152,8 @@ class JokeQuoteClient:
                     if joke:
                         return {"content": joke, "type": "joke", "source": "Dad Joke"}
                 
-                elif source == "programming_joke":
-                    joke = self.get_programming_joke()
+                elif source == "general_joke":
+                    joke = self.get_general_joke()
                     if joke:
                         return {"content": joke, "type": "joke", "source": "Programming Joke"}
                 
@@ -186,55 +184,32 @@ def enhance_with_ollama(
     model: str = "llama3.2:latest"
 ) -> str:
     """
-    Enhance joke or quote with ollama for developer context.
-    
+    Present joke or quote in clean format - no enhancement needed.
+    Just return the content as-is.
+
     Args:
         content: Content dictionary from API
-        event_type: Type of event
-        model: Ollama model to use
-        
+        event_type: Type of event (not used, kept for compatibility)
+        model: Ollama model to use (not used, kept for compatibility)
+
     Returns:
-        Enhanced message
+        Formatted content
     """
     if not content:
-        return "💫 Keep coding with enthusiasm!"
-    
+        return "💫 Keep your enthusiasm!"
+
     content_text = content.get("content", "")
     content_type = content.get("type", "")
     author = content.get("author", "")
-    
-    try:
-        if content_type == "joke":
-            prompt = f"""Here's a joke: "{content_text}"
-            
-Rephrase this as a brief, encouraging message for a developer during their {event_type.lower()} event.
-Make it light-hearted, humorous, and motivating. Maximum 20 words. Include one emoji. Only output the message, no metadata."""
-        else:  # quote
-            prompt = f"""Here's a quote: "{content_text}" - {author}
-            
-Create a brief developer encouragement inspired by this quote for a {event_type.lower()} event.
-Maximum 20 words. Include one emoji. Make it practical, motivating, and add a touch of coding humor. Only output the message, no metadata."""
-        
-        result = subprocess.run(
-            ["ollama", "run", model, "--verbose=false"],
-            input=prompt,
-            text=True,
-            capture_output=True,
-            timeout=Timeouts.OLLAMA_QUICK
-        )
-        
-        if result.returncode == 0 and result.stdout:
-            message = result.stdout.strip().split('\n')[0].strip()
-            # Keep the full ollama response without truncation
-            return message
-    except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
-        pass
-    
-    # Fallback: return the original content with emoji
+
+    # Return content as-is with appropriate emoji
     if content_type == "joke":
-        return f"😄 {content_text[:100]}"
-    else:
-        return f"💭 \"{content_text[:80]}\" - {author}"
+        return f"😄 {content_text}"
+    else:  # quote
+        if author:
+            return f"💭 \"{content_text}\" - {author}"
+        else:
+            return f"💭 {content_text}"
 
 
 def generate_external_message(
@@ -272,26 +247,24 @@ def generate_external_message(
             return f"💭 \"{content['content'][:80]}\" - {author}"
 
 
-# Fallback messages if APIs are unavailable
+# Fallback messages if APIs are unavailable - general humor
 FALLBACK_JOKES = [
-    "Why do programmers prefer dark mode? Because light attracts bugs! 🐛",
-    "A SQL query walks into a bar, sees two tables and asks: 'Can I join you?' 🍺",
-    "Why did the developer quit? Because they didn't get arrays! 💰",
-    "How many programmers does it take to change a light bulb? None, it's a hardware problem! 💡",
-    "Why do Java developers wear glasses? Because they can't C#! 👓",
-    "There are only 10 types of people: those who understand binary and those who don't! 🤓",
-    "Why did the programmer go broke? Because he used up all his cache! 💸",
-    "What's a programmer's favorite hangout place? The Foo Bar! 🍻",
-    "Why was the JavaScript developer sad? Because they didn't Node how to Express themselves! 😢",
-    "How do you comfort a JavaScript bug? You console it! 🎮",
+    "Why don't scientists trust atoms? Because they make up everything! 🔬",
+    "What do you call a fake noodle? An impasta! 🍝",
+    "Why did the scarecrow win an award? He was outstanding in his field! 🌾",
+    "What do you call a bear with no teeth? A gummy bear! 🐻",
+    "Why did the bicycle fall over? It was two tired! 🚲",
+    "What do you call a fish wearing a bowtie? Sofishticated! 🐟",
+    "Why did the math book look sad? Because it had too many problems! 📚",
+    "What's the best thing about Switzerland? The flag is a big plus! 🇨🇭",
 ]
 
 FALLBACK_QUOTES = [
-    '"First, solve the problem. Then, write the code." - John Johnson',
+    '"The only way to do great work is to love what you do." - Steve Jobs',
     '"Experience is the name everyone gives to their mistakes." - Oscar Wilde',
-    '"The best way to predict the future is to implement it." - David Heinemeier Hansson',
-    '"Code is like humor. When you have to explain it, it\'s bad." - Cory House',
-    '"Programming is thinking, not typing." - Casey Patton',
+    '"The best way to predict the future is to create it." - Peter Drucker',
+    '"Believe you can and you\'re halfway there." - Theodore Roosevelt',
+    '"In the middle of difficulty lies opportunity." - Albert Einstein',
 ]
 
 
