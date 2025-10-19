@@ -226,6 +226,7 @@ if [ "$REMOVE_SCRIPTS" = true ]; then
             "message_generator.py"
             "ollama_models.py"
             "rate_limiter.py"
+            "stoic_quotes.py"
         )
         
         for lib_file in "${LIB_FILES[@]}"; do

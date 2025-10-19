@@ -13,6 +13,13 @@ Encouraging hooks and commands for Claude Code that brighten your coding session
 - `/joke` - Display random developer jokes
 - `/jwtext` - Show today's JW daily text with developer encouragement
 
+### 🧘 Message Sources
+- **Default** - General encouraging messages
+- **JW Daily Text** - Scripture-based encouragement
+- **Developer Jokes** - Programming humor
+- **Stoic Quotes** - Ancient wisdom for calm coding (NEW!)
+- **Inspirational Quotes** - General motivational quotes
+
 All messages are displayed without cluttering your conversation context!
 
 ## 🚀 Quick Install
@@ -117,6 +124,16 @@ Displays a random programming joke using ollama or fallback jokes.
 /jwtext
 ```
 Shows today's scripture with developer-focused encouragement.
+
+### Stoic Wisdom (NEW!)
+The system now includes **stoic quotes** for calm, focused coding:
+- **Ancient wisdom** from Marcus Aurelius, Epictetus, and Seneca
+- **Developer-specific** stoic principles for coding challenges
+- **Pure LLM generation** creating original stoic wisdom (40% pure, 60% quote-based)
+- **Theme filtering** for anger management, self-control, peace, and obstacles
+- **Weighted distribution**: Stoic 32%, Default 30%, JW 20%, Jokes 15%, Quotes 3%
+
+Perfect for maintaining composure during debugging sessions! 🧘
 
 ## 🔧 Advanced Installation
 

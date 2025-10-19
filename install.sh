@@ -122,6 +122,7 @@ if [ "$INSTALL_COMMANDS" = true ] || [ "$INSTALL_HOOKS" = true ]; then
     cp "$SCRIPT_DIR/lib/message_generator.py" "$USER_CLAUDE_DIR/" 2>/dev/null || true
     cp "$SCRIPT_DIR/lib/joke_command.py" "$USER_CLAUDE_DIR/" 2>/dev/null || true
     cp "$SCRIPT_DIR/lib/jw_text_command.py" "$USER_CLAUDE_DIR/" 2>/dev/null || true
+    cp "$SCRIPT_DIR/lib/stoic_quotes.py" "$USER_CLAUDE_DIR/" 2>/dev/null || true
     
     # Copy entire lib folder to ensure all modules are available
     echo -e "${YELLOW}Installing lib modules for API features...${NC}"
@@ -279,6 +280,9 @@ if [ "$INSTALL_HOOKS" = true ]; then
     if [ ! -f "$USER_CLAUDE_DIR/message_generator.py" ]; then
         echo -e "${YELLOW}Installing message generator...${NC}"
         cp "$SCRIPT_DIR/lib/message_generator.py" "$USER_CLAUDE_DIR/"
+        cp "$SCRIPT_DIR/lib/joke_command.py" "$USER_CLAUDE_DIR/"
+        cp "$SCRIPT_DIR/lib/jw_text_command.py" "$USER_CLAUDE_DIR/"
+        cp "$SCRIPT_DIR/lib/stoic_quotes.py" "$USER_CLAUDE_DIR/"
         echo -e "${GREEN}✓ Message generator installed${NC}"
     fi
 fi

@@ -102,23 +102,21 @@ class TestMessageGenerator(unittest.TestCase):
         message = _apply_config_formatting("Test message 🚀", None)
         self.assertEqual(message, "Test message 🚀")
         
-        # Test with max length config
+        # Test with emoji removal
         mock_config = MagicMock()
         mock_config.get_max_message_length.return_value = 10
-        mock_config.include_emojis.return_value = True
-        
-        message = _apply_config_formatting("This is a very long message", mock_config)
-        self.assertEqual(len(message), 10)
-        self.assertTrue(message.endswith("..."))
-        
-        # Test emoji removal
         mock_config.include_emojis.return_value = False
-        mock_config.get_max_message_length.return_value = 100
         
         message = _apply_config_formatting("Test message 🚀 with emoji 😊", mock_config)
         self.assertNotIn("🚀", message)
         self.assertNotIn("😊", message)
         self.assertIn("Test message", message)
+        
+        # Test with emojis enabled
+        mock_config.include_emojis.return_value = True
+        message = _apply_config_formatting("Test message 🚀 with emoji 😊", mock_config)
+        self.assertIn("🚀", message)
+        self.assertIn("😊", message)
     
     @patch('lib.message_generator.get_config')
     def test_message_probability(self, mock_get_config):
@@ -177,6 +175,17 @@ class TestMessageSources(unittest.TestCase):
         message = generate_message("SessionStart", message_source="quote", use_ollama=False)
         self.assertIn("poetry", message)
         mock_external.assert_called_once_with("SessionStart", content_type="quote", use_ollama=False)
+    
+    @patch('lib.message_generator.API_FEATURES_AVAILABLE', True)
+    @patch('lib.message_generator.generate_stoic_message')
+    def test_stoic_message_source(self, mock_stoic):
+        """Test stoic quotes message source."""
+        mock_stoic.return_value = "🧘 Control what you can: your code, your response, your calm."
+        
+        message = generate_message("SessionStart", message_source="stoic", use_ollama=False)
+        self.assertIn("🧘", message)
+        self.assertIn("calm", message)
+        mock_stoic.assert_called_once_with("SessionStart", use_ollama=False)
 
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@ Tests for API integration modules.
 import unittest
 import sys
 import os
+import json
 from unittest.mock import patch, MagicMock, Mock
 from datetime import datetime, timedelta
 
@@ -157,7 +158,7 @@ class TestAPIClient(unittest.TestCase):
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.text = "Plain text response"
-        mock_response.json.side_effect = ValueError("Not JSON")
+        mock_response.json.side_effect = json.JSONDecodeError("Not JSON", "", 0)
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
         
