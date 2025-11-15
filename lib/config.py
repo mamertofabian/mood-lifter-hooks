@@ -73,7 +73,7 @@ class Config:
                 "ollama": {
                     "enabled": True,
                     "use_variety": False,
-                    "preferred_models": ["llama3.2:latest"],
+                    "preferred_models": ["llama-3.2-1b-instruct"],
                     "timeout": 5
                 },
                 "message_sources": {
@@ -174,19 +174,19 @@ class Config:
         return self.get("enabled", True)
     
     def is_ollama_enabled(self) -> bool:
-        """Check if ollama is enabled."""
+        """Check if LLM generation is enabled (LM Studio, formerly Ollama)."""
         return self.get("ollama.enabled", True)
-    
+
     def use_ollama_variety(self) -> bool:
-        """Check if ollama model variety is enabled."""
+        """Check if LLM model variety is enabled."""
         return self.get("ollama.use_variety", True)
-    
+
     def get_preferred_models(self) -> List[str]:
-        """Get list of preferred ollama models."""
-        return self.get("ollama.preferred_models", ["llama3.2:latest"])
-    
+        """Get list of preferred LM Studio models."""
+        return self.get("ollama.preferred_models", ["llama-3.2-1b-instruct"])
+
     def get_ollama_timeout(self) -> int:
-        """Get ollama timeout in seconds."""
+        """Get LLM generation timeout in seconds."""
         return self.get("ollama.timeout", 5)
     
     def get_message_source_weights(self) -> Dict[str, int]:
@@ -385,7 +385,7 @@ def test_config():
         "mood_lifter_hooks": {
             "ollama": {
                 "use_variety": False,
-                "preferred_models": ["llama3.2:latest"]
+                "preferred_models": ["llama-3.2-1b-instruct"]
             },
             "message_sources": {
                 "weights": {

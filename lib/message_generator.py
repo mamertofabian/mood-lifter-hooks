@@ -83,12 +83,15 @@ try:
 except ImportError:
     STOIC_AVAILABLE = False
 
-# Import ollama model manager
+# Import LM Studio model manager (replaces ollama)
 try:
-    from lib.ollama_models import OllamaModelManager, generate_with_model
-    OLLAMA_MANAGER_AVAILABLE = True
+    from lib.lm_studio import LMStudioModelManager, generate_with_model
+    LLM_MANAGER_AVAILABLE = True
 except ImportError:
-    OLLAMA_MANAGER_AVAILABLE = False
+    LLM_MANAGER_AVAILABLE = False
+
+# Backward compatibility alias
+OLLAMA_MANAGER_AVAILABLE = LLM_MANAGER_AVAILABLE
 
 # For backwards compatibility
 API_FEATURES_AVAILABLE = JW_AND_EXTERNAL_APIS_AVAILABLE
@@ -103,8 +106,8 @@ _model_manager = None
 def get_model_manager():
     """Get or create the global model manager instance."""
     global _model_manager
-    if _model_manager is None:
-        _model_manager = OllamaModelManager()
+    if _model_manager is None and LLM_MANAGER_AVAILABLE:
+        _model_manager = LMStudioModelManager()
     return _model_manager
 
 # Fallback messages for when ollama is unavailable - general encouragement
@@ -141,7 +144,8 @@ FALLBACK_MESSAGES = {
     ]
 }
 
-# Ollama prompts for different events - general encouragement, not coding-specific
+# LLM prompts for different events - general encouragement, not coding-specific
+# (Previously used with Ollama, now used with LM Studio)
 OLLAMA_PROMPTS = {
     "SessionStart": {
         "morning": "Generate a brief, encouraging morning message to start the day. Include one emoji. Maximum 15 words. Be positive, energizing, and slightly humorous. Only output the message, no metadata.",
@@ -175,13 +179,14 @@ def get_time_period() -> str:
 
 def generate_with_ollama(event_type: str, model: Optional[str] = None, use_variety: bool = True) -> Optional[str]:
     """
-    Generate an encouraging message using ollama.
-    
+    Generate an encouraging message using LM Studio (formerly Ollama).
+    Function name kept for backward compatibility.
+
     Args:
         event_type: Type of event (SessionStart, Stop, Notification)
-        model: Specific ollama model to use (None for auto-selection)
+        model: Specific model to use (None for auto-selection)
         use_variety: Whether to use model rotation for variety
-        
+
     Returns:
         Generated message or None if failed
     """
@@ -210,31 +215,30 @@ def generate_with_ollama(event_type: str, model: Optional[str] = None, use_varie
         
         if not prompt:
             return None
-        
-        # Use model manager for selection if ollama manager available
-        if OLLAMA_MANAGER_AVAILABLE and use_variety and model is None:
+
+        # Use model manager for selection if LLM manager available
+        if LLM_MANAGER_AVAILABLE and use_variety and model is None:
             manager = get_model_manager()
-            selected_model = manager.select_model()
+            if manager:
+                selected_model = manager.select_model()
+            else:
+                selected_model = model or "llama-3.2-1b-instruct"
         else:
-            selected_model = model or "llama3.2:latest"
-        
-        # Call ollama with timeout
-        result = subprocess.run(
-            ["ollama", "run", selected_model, "--verbose=false"],
-            input=prompt,
-            text=True,
-            capture_output=True,
-            timeout=Timeouts.OLLAMA_QUICK
-        )
-        
-        if result.returncode == 0 and result.stdout:
-            # Clean up the output - take first line, trim whitespace
-            message = result.stdout.strip().split('\n')[0].strip()
-            # Let ollama decide the length, don't truncate
-            return message
-            
-    except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
-        # Ollama not available or failed
+            selected_model = model
+
+        # Call LM Studio CLI with the prompt
+        if LLM_MANAGER_AVAILABLE:
+            message = generate_with_model(
+                prompt=prompt,
+                model=selected_model,
+                timeout=Timeouts.OLLAMA_QUICK
+            )
+            if message:
+                # Let LLM decide the length, don't truncate
+                return message
+
+    except Exception:
+        # LM Studio not available or failed
         pass
     
     return None

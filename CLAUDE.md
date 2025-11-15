@@ -30,10 +30,10 @@ Claude Code Hooks configuration in settings.json:
 
 - SessionStart hooks: Use JSON output with `"suppressOutput": true` to prevent context addition
 - Stop/Notification hooks: Use standard output (naturally not added to Claude's context)
-- Messages generated dynamically using ollama for variety and context-awareness
+- Messages generated dynamically using LM Studio (via `lms` CLI) for variety and context-awareness
 - Three main hook types: SessionStart, Stop, and Notification
 - Messages should be encouraging, positive, and non-distracting
-- Includes fallback messages if ollama is unavailable
+- Includes fallback messages if LM Studio is unavailable
 
 ## Development Guidelines
 
@@ -68,53 +68,58 @@ mood-lifter-hooks/
 - Format code with `black` and `ruff`
 - No external dependencies required for basic functionality
 
-## Future Features (TODO)
+## LM Studio Migration (Completed)
 
-The following features have been planned but not yet implemented:
+The project has been migrated from Ollama to LM Studio:
+- **LLM Backend**: Now uses LM Studio's OpenAI-compatible HTTP API (http://localhost:1234/v1)
+- **Model Names**: Updated to use LM Studio model naming (e.g., `llama-3.2-1b-instruct` instead of `llama3.2:latest`)
+- **Key Files**:
+  - `lib/lm_studio.py`: New model manager using HTTP API
+  - `lib/message_generator.py`: Updated to use LM Studio
+  - `config/defaults.json`: Updated with LM Studio model names
+- **Requirements**:
+  - LM Studio installed with server running
+  - Server accessible at http://localhost:1234
+  - At least one model loaded in LM Studio
+- **API Approach**: Uses OpenAI-compatible endpoints for better performance and flexibility
 
-### 1. Multiple Ollama Model Support
-- **Goal**: Randomly use different ollama models (mistral, phi3.5, etc.) for variety
-- **Implementation Notes**:
-  - Add model rotation logic in `message_generator.py`
-  - Keep efficiency in mind - use lightweight models
-  - Consider caching model list to avoid repeated `ollama list` calls
-  - Suggested models: llama3.2:latest, mistral:7b-instruct
+## Implemented Features
 
-### 2. External API Integration
-- **Goal**: Fetch content from external sources and enhance with ollama
-- **Implementation Notes**:
-  - Add `requests` dependency for API calls
-  - Create new module for API integrations
-  - Sources to integrate:
-    - Dad jokes API
-    - Developer quotes/jokes APIs
-    - Programming wisdom APIs
-  - Process: Fetch → Summarize/enhance with ollama → Display
+### 1. ✅ Multiple LLM Model Support
+- Model rotation logic implemented in `lm_studio.py`
+- Uses lightweight models for efficiency
+- Caches model list to avoid repeated `lms ls` calls
+- Supported models: llama-3.2-1b-instruct, llama-3.2-3b-instruct, qwen2.5-7b-instruct, etc.
 
-### 3. JW Daily Text Integration
-- **Primary Resource**: https://wol.jw.org/wol/dt/r1/lp-e/YYYY/MM/DD
-  - Replace YYYY/MM/DD with current date (e.g., 2025/8/31)
-  - Parse daily text and scripture
-  - Use ollama to create developer-focused encouragement based on the text
-- **Implementation Notes**:
-  - Add `beautifulsoup4` for HTML parsing
-  - Cache daily texts to avoid repeated fetches
-  - For afternoon/evening hooks, optionally use random past dates
-  - Ensure wholesome, uplifting integration
+### 2. ✅ External API Integration
+- `requests` dependency added
+- API integrations module created
+- Integrated sources:
+  - Dad jokes API
+  - Developer quotes/jokes APIs
+  - Programming wisdom APIs
+- Process: Fetch → Optionally enhance with LM Studio → Display
 
-### 4. Configuration System
-- **Goal**: Allow users to configure preferences
-- **Features to add**:
-  - Enable/disable ollama
+### 3. ✅ JW Daily Text Integration
+- Primary Resource: https://wol.jw.org/wol/dt/r1/lp-e/YYYY/MM/DD
+- Parses daily text and scripture
+- Uses LM Studio to create developer-focused encouragement
+- `beautifulsoup4` for HTML parsing
+- Caches daily texts to avoid repeated fetches
+- Supports random past dates for variety
+
+### 4. ✅ Configuration System
+- User configuration system implemented
+- Features:
+  - Enable/disable LM Studio
   - Select preferred models
-  - Choose message sources (pure encouragement, jokes, daily text)
+  - Choose message sources (pure encouragement, jokes, daily text, stoic quotes)
   - Set message frequency/probability
   - Time-based preferences
 
 ### 5. Testing Suite
-- **Goal**: Comprehensive test coverage
+- **Status**: Partially implemented
 - **Tests needed**:
-  - Unit tests for message_generator.py
-  - Integration tests for hook scripts
-  - Mock ollama responses for consistent testing
-  - Test fallback behavior when ollama unavailable
+  - Update existing tests to use LM Studio instead of Ollama
+  - Add integration tests for LM Studio CLI
+  - Test fallback behavior when LM Studio unavailable

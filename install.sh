@@ -33,7 +33,7 @@ usage() {
     echo "  -p, --project DIR    Install to specific project directory (default: user-level)"
     echo "  --hooks-only         Install only hooks (no slash commands)"
     echo "  --commands-only      Install only slash commands (no hooks)"
-    echo "  --no-ollama          Skip ollama availability check"
+    echo "  --no-lms             Skip LM Studio server availability check"
     echo ""
     echo "Examples:"
     echo "  $0                           # Install everything at user level"
@@ -61,8 +61,8 @@ while [[ $# -gt 0 ]]; do
             INSTALL_HOOKS=false
             shift
             ;;
-        --no-ollama)
-            SKIP_OLLAMA=true
+        --no-lms|--no-ollama)
+            SKIP_LMS=true
             shift
             ;;
         *)
@@ -103,14 +103,15 @@ echo -e "${YELLOW}Creating directories...${NC}"
 mkdir -p "$CLAUDE_DIR"
 mkdir -p "$COMMANDS_DIR"
 
-# Check for ollama (optional)
-if [ "$SKIP_OLLAMA" != true ]; then
-    echo -e "${YELLOW}Checking for ollama...${NC}"
-    if command -v ollama &> /dev/null; then
-        echo -e "${GREEN}✓ ollama is installed${NC}"
-        ollama list &> /dev/null && echo -e "${GREEN}✓ ollama is running${NC}" || echo -e "${YELLOW}⚠ ollama is installed but not running${NC}"
+# Check for LM Studio (optional)
+if [ "$SKIP_LMS" != true ]; then
+    echo -e "${YELLOW}Checking for LM Studio server...${NC}"
+    if curl -s -m 2 http://localhost:1234/v1/models &> /dev/null; then
+        echo -e "${GREEN}✓ LM Studio server is running on http://localhost:1234${NC}"
     else
-        echo -e "${YELLOW}⚠ ollama not found - hooks will use fallback messages${NC}"
+        echo -e "${YELLOW}⚠ LM Studio server not accessible - hooks will use fallback messages${NC}"
+        echo -e "${YELLOW}  Start LM Studio and ensure server is running on port 1234${NC}"
+        echo -e "${YELLOW}  Download LM Studio from https://lmstudio.ai${NC}"
     fi
 fi
 

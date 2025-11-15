@@ -52,7 +52,7 @@ cd mood-lifter-hooks
 | `--project DIR` | Install to specific project directory |
 | `--hooks-only` | Install only hooks (no slash commands) |
 | `--commands-only` | Install only slash commands (no hooks) |
-| `--no-ollama` | Skip ollama availability check |
+| `--no-lms` | Skip LM Studio availability check |
 
 ## 📦 What Gets Installed
 
@@ -107,8 +107,8 @@ cd mood-lifter-hooks
 - **Stop/Notification hooks** output directly without context impact
 
 ### Dynamic Message Generation
-- Uses **ollama** for AI-generated encouragement when available
-- Falls back to curated messages if ollama is unavailable
+- Uses **LM Studio** for AI-generated encouragement when available
+- Falls back to curated messages if LM Studio is unavailable
 - Supports multiple lightweight models (phi3.5, mistral, llama3.2)
 
 ## 🎮 Using the Commands
@@ -117,7 +117,7 @@ cd mood-lifter-hooks
 ```
 /joke
 ```
-Displays a random programming joke using ollama or fallback jokes.
+Displays a random programming joke using LM Studio or fallback jokes.
 
 ### JW Daily Text
 ```
@@ -181,10 +181,20 @@ allowed-tools: Bash(python3:*)
 !`python3 ~/.claude/your_script.py`
 ```
 
-### Configure Ollama Models
-Edit scripts to prefer different models:
-```python
-preferred_models = ['gemma2:2b', 'llama3.2:latest', 'your-model:tag']
+### Configure LM Studio Models
+Edit `config/defaults.json` to prefer different models:
+```json
+{
+  "mood_lifter_hooks": {
+    "ollama": {
+      "preferred_models": [
+        "llama-3.2-1b-instruct",
+        "qwen2.5-7b-instruct",
+        "your-model-name"
+      ]
+    }
+  }
+}
 ```
 
 ## 🚦 Prerequisites
@@ -194,13 +204,17 @@ preferred_models = ['gemma2:2b', 'llama3.2:latest', 'your-model:tag']
 - Claude Code with hooks support
 
 ### Optional but Recommended
-- [ollama](https://ollama.ai) - For dynamic message generation
+- [LM Studio](https://lmstudio.ai) - For dynamic message generation
   ```bash
-  # Install ollama
-  curl -sSL https://ollama.ai/install.sh | bash
-  
-  # Pull lightweight model
-  ollama pull llama3.2:latest
+  # 1. Download and install LM Studio from https://lmstudio.ai
+
+  # 2. Load a lightweight model in LM Studio GUI
+  #    Recommended: llama-3.2-1b-instruct or llama-3.2-3b-instruct
+
+  # 3. Start the server (should run on http://localhost:1234 by default)
+  #    This is usually automatic when you load a model
+
+  # The hooks will use LM Studio's OpenAI-compatible API automatically
   ```
 
 ## 🐛 Troubleshooting
@@ -217,10 +231,12 @@ preferred_models = ['gemma2:2b', 'llama3.2:latest', 'your-model:tag']
 3. Restart Claude Code
 4. Try `/help` to see available commands
 
-### Ollama Issues?
-1. Ensure ollama is running: `ollama serve`
-2. Check model is downloaded: `ollama list`
-3. Scripts will use fallback messages if ollama fails
+### LM Studio Issues?
+1. Ensure LM Studio server is running (check the app)
+2. Verify server is accessible: `curl http://localhost:1234/v1/models`
+3. Check that a model is loaded in LM Studio GUI
+4. Verify port 1234 is not blocked by firewall
+5. Scripts will automatically use fallback messages if LM Studio is unavailable
 
 ## 📝 Manual Configuration
 
@@ -259,7 +275,7 @@ We welcome contributions! Ideas:
 - Multi-language support
 - Additional API integrations
 - Custom scheduling
-- More ollama models
+- Support for more LLM backends
 - Theme-based messages
 
 ## 📄 License
@@ -269,7 +285,7 @@ MIT License - See [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - Claude Code Hooks community
-- Ollama for AI message generation
+- LM Studio for AI message generation
 - All contributors and users
 
 ---
