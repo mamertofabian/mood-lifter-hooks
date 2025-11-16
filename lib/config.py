@@ -167,20 +167,20 @@ class Config:
         return self.get("enabled", True)
 
     def is_lm_studio_enabled(self) -> bool:
-        """Check if LLM generation is enabled (LM Studio, formerly Ollama)."""
-        return self.get("ollama.enabled", True)
+        """Check if LLM generation is enabled (LM Studio)."""
+        return self.get("lm_studio.enabled", True)
 
     def use_lm_studio_variety(self) -> bool:
         """Check if LLM model variety is enabled."""
-        return self.get("ollama.use_variety", True)
+        return self.get("lm_studio.use_variety", True)
 
     def get_preferred_models(self) -> List[str]:
         """Get list of preferred LM Studio models."""
-        return self.get("ollama.preferred_models", ["llama-3.2-1b-instruct"])
+        return self.get("lm_studio.preferred_models", ["llama-3.2-1b-instruct"])
 
     def get_lm_studio_timeout(self) -> int:
         """Get LLM generation timeout in seconds."""
-        return self.get("ollama.timeout", 5)
+        return self.get("lm_studio.timeout", 5)
 
     def get_message_source_weights(self) -> Dict[str, int]:
         """Get message source weights for random selection."""

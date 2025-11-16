@@ -6,7 +6,6 @@ Provides quotes from ancient Stoics and modern interpretations for developers.
 
 import os
 import random
-import subprocess
 import sys
 from typing import Dict, Optional
 
@@ -14,6 +13,7 @@ from typing import Dict, Optional
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from lib.constants import Timeouts
+from lib.lm_studio import generate_with_model
 
 # Curated stoic quotes focused on calmness, self-control, peace of mind, and managing anger
 STOIC_QUOTES = [
@@ -216,7 +216,7 @@ def get_general_stoic_wisdom() -> str:
 
 
 def enhance_stoic_quote_with_lm_studio(
-    quote: Dict[str, str], event_type: str = "SessionStart", model: str = "llama3.2:latest"
+    quote: Dict[str, str], event_type: str = "SessionStart", model: str = "llama-3.2-1b-instruct"
 ) -> str:
     """
     Present stoic quote in a clean, readable format.
@@ -225,7 +225,7 @@ def enhance_stoic_quote_with_lm_studio(
     Args:
         quote: Quote dictionary with 'text' and 'author'
         event_type: Type of event
-        model: Ollama model to use (not used, kept for compatibility)
+        model: LM Studio model to use (not used, kept for compatibility)
 
     Returns:
         Formatted quote
@@ -244,7 +244,7 @@ def enhance_stoic_quote_with_lm_studio(
 
 
 def generate_pure_stoic_wisdom(
-    event_type: str = "SessionStart", theme: Optional[str] = None, model: str = "llama3.2:latest"
+    event_type: str = "SessionStart", theme: Optional[str] = None, model: str = "llama-3.2-1b-instruct"
 ) -> Optional[str]:
     """
     Generate original stoic wisdom from scratch using LM Studio.
@@ -253,7 +253,7 @@ def generate_pure_stoic_wisdom(
     Args:
         event_type: Type of event
         theme: Optional theme to focus on (anger, control, peace, etc.)
-        model: Ollama model to use
+        model: LM Studio model to use
 
     Returns:
         Generated stoic wisdom or None if failed
@@ -279,22 +279,16 @@ Make it sound like wisdom from Marcus Aurelius, Epictetus, or Seneca.
 Do not quote existing stoics - create new wisdom in their style.
 Only output the wisdom statement, no metadata or attribution."""
 
-    try:
-        result = subprocess.run(
-            ["ollama", "run", model, "--verbose=false"],
-            input=prompt,
-            text=True,
-            capture_output=True,
-            timeout=Timeouts.OLLAMA_QUICK,
-        )
+    # Use LM Studio HTTP API instead of subprocess
+    message = generate_with_model(
+        prompt=prompt,
+        model=model,
+        timeout=Timeouts.LLM_QUICK,
+        temperature=0.7,
+        max_tokens=50,
+    )
 
-        if result.returncode == 0 and result.stdout:
-            message = result.stdout.strip().split("\n")[0].strip()
-            return message
-    except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
-        pass
-
-    return None
+    return message
 
 
 def generate_stoic_message(
@@ -373,10 +367,10 @@ def test_stoic_quotes():
         print(f"\n   {i+1}. \"{quote['text'][:60]}...\"")
         print(f"      - {quote['author']}")
 
-    # Test developer wisdom
-    print("\n\n3. Developer-Specific Stoic Wisdom (5 samples):")
+    # Test general wisdom
+    print("\n\n3. General Stoic Wisdom (5 samples):")
     for i in range(5):
-        wisdom = get_developer_stoic_wisdom()
+        wisdom = get_general_stoic_wisdom()
         print(f"   {i+1}. {wisdom}")
 
     # Test message generation
@@ -385,8 +379,8 @@ def test_stoic_quotes():
     msg = generate_stoic_message(use_lm_studio=False)
     print(f"   {msg}")
 
-    print("\n   With developer wisdom:")
-    msg = generate_stoic_message(use_developer_wisdom=True)
+    print("\n   With general wisdom:")
+    msg = generate_stoic_message(use_general_wisdom=True)
     print(f"   {msg}")
 
     print("\n   With LM Studio (quote-based, may take a moment):")

@@ -16,8 +16,8 @@ try:
 except ImportError:
     # Fallback constants if imports fail
     class Timeouts:
-        OLLAMA_NORMAL = 5
-        OLLAMA_QUICK = 3
+        LLM_NORMAL = 5
+        LLM_QUICK = 3
 
     class Defaults:
         pass
@@ -91,7 +91,7 @@ class LMStudioModelManager:
             return self._cached_models
 
         try:
-            response = requests.get(f"{self.base_url}/models", timeout=Timeouts.OLLAMA_NORMAL)
+            response = requests.get(f"{self.base_url}/models", timeout=Timeouts.LLM_NORMAL)
 
             if response.status_code == 200:
                 data = response.json()

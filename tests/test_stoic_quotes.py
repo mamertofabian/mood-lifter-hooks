@@ -87,51 +87,41 @@ class TestStoicQuotes(unittest.TestCase):
         self.assertGreater(len(message), 0)
         self.assertTrue(message.startswith("🧘"))
 
-    @patch("subprocess.run")
-    def test_generate_stoic_message_with_lm_studio(self, mock_run):
+    @patch("lib.stoic_quotes.generate_with_model")
+    def test_generate_stoic_message_with_lm_studio(self, mock_generate):
         """Test generating stoic message with LM Studio (mocked)."""
         # Mock successful LM Studio response
-        mock_result = MagicMock()
-        mock_result.returncode = 0
-        mock_result.stdout = "🧘 Stay calm and debug on."
-        mock_run.return_value = mock_result
+        mock_generate.return_value = "🧘 Stay calm and debug on."
 
         message = generate_stoic_message(use_lm_studio=True)
         self.assertIsInstance(message, str)
         self.assertGreater(len(message), 0)
 
-    @patch("subprocess.run")
-    def test_enhance_stoic_quote_with_lm_studio(self, mock_run):
-        """Test enhancing stoic quote with LM Studio (mocked)."""
-        # Mock successful LM Studio response
-        mock_result = MagicMock()
-        mock_result.returncode = 0
-        mock_result.stdout = "🧘 Apply this wisdom to your coding challenges."
-        mock_run.return_value = mock_result
-
+    def test_enhance_stoic_quote_with_lm_studio(self):
+        """Test enhancing stoic quote with LM Studio (just formatting, no API call)."""
         quote = {"text": "Control what you can", "author": "Marcus Aurelius"}
         message = enhance_stoic_quote_with_lm_studio(quote)
         self.assertIsInstance(message, str)
         self.assertGreater(len(message), 0)
+        self.assertIn("Control what you can", message)
 
     def test_enhance_stoic_quote_with_lm_studio_fallback(self):
-        """Test enhancing stoic quote with LM Studio fallback."""
-        quote = {"text": "Control what you can", "author": "Marcus Aurelius"}
+        """Test enhancing stoic quote with empty quote (fallback)."""
+        # Test with None quote
+        message = enhance_stoic_quote_with_lm_studio(None)
+        self.assertIsInstance(message, str)
+        self.assertEqual(message, "🧘 Stay calm and carry on.")
 
-        with patch("subprocess.run", side_effect=FileNotFoundError):
-            message = enhance_stoic_quote_with_lm_studio(quote)
-            self.assertIsInstance(message, str)
-            self.assertGreater(len(message), 0)
-            self.assertIn("Control what you can", message)
+        # Test with empty dict
+        message = enhance_stoic_quote_with_lm_studio({})
+        self.assertIsInstance(message, str)
+        self.assertGreater(len(message), 0)
 
-    @patch("subprocess.run")
-    def test_generate_pure_stoic_wisdom(self, mock_run):
+    @patch("lib.stoic_quotes.generate_with_model")
+    def test_generate_pure_stoic_wisdom(self, mock_generate):
         """Test generating pure stoic wisdom with LM Studio (mocked)."""
         # Mock successful LM Studio response
-        mock_result = MagicMock()
-        mock_result.returncode = 0
-        mock_result.stdout = "🧘 The bug teaches patience, the fix rewards persistence."
-        mock_run.return_value = mock_result
+        mock_generate.return_value = "🧘 The bug teaches patience, the fix rewards persistence."
 
         message = generate_pure_stoic_wisdom()
         self.assertIsInstance(message, str)
@@ -140,7 +130,7 @@ class TestStoicQuotes(unittest.TestCase):
 
     def test_generate_pure_stoic_wisdom_fallback(self):
         """Test generating pure stoic wisdom fallback."""
-        with patch("subprocess.run", side_effect=FileNotFoundError):
+        with patch("lib.stoic_quotes.generate_with_model", return_value=None):
             message = generate_pure_stoic_wisdom()
             self.assertIsNone(message)
 

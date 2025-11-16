@@ -37,7 +37,7 @@ class TestConfig(unittest.TestCase):
 
         # Check basic settings exist
         self.assertTrue(config.is_enabled())
-        self.assertTrue(config.is_ollama_enabled())
+        self.assertTrue(config.is_lm_studio_enabled())
         self.assertIsInstance(config.get_preferred_models(), list)
         self.assertGreater(len(config.get_preferred_models()), 0)
 
@@ -46,7 +46,7 @@ class TestConfig(unittest.TestCase):
         config = Config()
 
         # Test valid paths
-        self.assertIsNotNone(config.get("ollama.enabled"))
+        self.assertIsNotNone(config.get("lm_studio.enabled"))
         self.assertIsNotNone(config.get("message_sources.weights"))
 
         # Test invalid path with default
@@ -57,7 +57,7 @@ class TestConfig(unittest.TestCase):
         # Create user config
         user_config = {
             "mood_lifter_hooks": {
-                "ollama": {"enabled": False, "use_variety": False},
+                "lm_studio": {"enabled": False, "use_variety": False},
                 "message_sources": {"weights": {"default": 80, "jw": 20}},
             }
         }
@@ -69,7 +69,7 @@ class TestConfig(unittest.TestCase):
         config = Config(self.temp_config_path)
 
         # Check overrides
-        self.assertFalse(config.is_ollama_enabled())
+        self.assertFalse(config.is_lm_studio_enabled())
         self.assertFalse(config.use_lm_studio_variety())
 
         weights = config.get_message_source_weights()

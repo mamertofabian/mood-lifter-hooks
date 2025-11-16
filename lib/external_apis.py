@@ -206,7 +206,7 @@ def enhance_with_ollama(
 
 
 def generate_external_message(
-    event_type: str = "SessionStart", content_type: Optional[str] = None, use_ollama: bool = True
+    event_type: str = "SessionStart", content_type: Optional[str] = None, use_lm_studio: bool = True
 ) -> Optional[str]:
     """
     Generate a message from external APIs.
@@ -214,7 +214,7 @@ def generate_external_message(
     Args:
         event_type: Type of event
         content_type: Type of content to fetch ('joke', 'quote', or None)
-        use_ollama: Whether to enhance with ollama
+        use_lm_studio: Whether to enhance with ollama
 
     Returns:
         Message or None on error
@@ -227,7 +227,7 @@ def generate_external_message(
     if not content:
         return None
 
-    if use_ollama:
+    if use_lm_studio:
         return enhance_with_ollama(content, event_type)
     else:
         # Return formatted content without ollama
@@ -316,11 +316,11 @@ def test_external_apis():
     # Test message generation
     print("\n5. Message Generation:")
     print("   Without ollama:")
-    msg = generate_external_message(use_ollama=False)
+    msg = generate_external_message(use_lm_studio=False)
     print(f"   {msg}")
 
     print("\n   With ollama:")
-    msg = generate_external_message(use_ollama=True)
+    msg = generate_external_message(use_lm_studio=True)
     print(f"   {msg}")
 
 
