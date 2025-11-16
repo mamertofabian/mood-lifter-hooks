@@ -13,7 +13,7 @@
       ],
       "timeout": 3,
       "fallback_to_default": true,
-      "comment": "Note: These are LM Studio model names (previously used Ollama). Adjust to match your available models."
+      "comment": "Adjust to match your available LM Studio models."
     },
     "message_sources": {
       "weights": {

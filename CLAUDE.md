@@ -68,21 +68,6 @@ mood-lifter-hooks/
 - Format code with `black` and `ruff`
 - No external dependencies required for basic functionality
 
-## LM Studio Migration (Completed)
-
-The project has been migrated from Ollama to LM Studio:
-- **LLM Backend**: Now uses LM Studio's OpenAI-compatible HTTP API (http://localhost:1234/v1)
-- **Model Names**: Updated to use LM Studio model naming (e.g., `llama-3.2-1b-instruct` instead of `llama3.2:latest`)
-- **Key Files**:
-  - `lib/lm_studio.py`: New model manager using HTTP API
-  - `lib/message_generator.py`: Updated to use LM Studio
-  - `config/defaults.json`: Updated with LM Studio model names
-- **Requirements**:
-  - LM Studio installed with server running
-  - Server accessible at http://localhost:1234
-  - At least one model loaded in LM Studio
-- **API Approach**: Uses OpenAI-compatible endpoints for better performance and flexibility
-
 ## Implemented Features
 
 ### 1. ✅ Multiple LLM Model Support
@@ -120,6 +105,5 @@ The project has been migrated from Ollama to LM Studio:
 ### 5. Testing Suite
 - **Status**: Partially implemented
 - **Tests needed**:
-  - Update existing tests to use LM Studio instead of Ollama
-  - Add integration tests for LM Studio CLI
+  - Add integration tests for LM Studio API
   - Test fallback behavior when LM Studio unavailable
