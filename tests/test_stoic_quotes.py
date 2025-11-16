@@ -59,25 +59,10 @@ class TestStoicQuotes(unittest.TestCase):
         wisdom = get_general_stoic_wisdom()
         self.assertIsInstance(wisdom, str)
         self.assertGreater(len(wisdom), 0)
-        # Should contain developer-related terms (most wisdom should have these)
-        developer_terms = [
-            "code",
-            "bug",
-            "programming",
-            "developer",
-            "git",
-            "test",
-            "merge",
-            "review",
-            "production",
-            "compiler",
-            "legacy",
-            "deadline",
-        ]
-        self.assertTrue(
-            any(term in wisdom.lower() for term in developer_terms),
-            f"Wisdom should contain developer terms: {wisdom}",
-        )
+        # Should be from the GENERAL_STOIC_WISDOM list
+        from lib.stoic_quotes import GENERAL_STOIC_WISDOM
+
+        self.assertIn(wisdom, GENERAL_STOIC_WISDOM)
 
     def test_get_fallback_stoic_message(self):
         """Test fallback stoic message."""
@@ -95,9 +80,9 @@ class TestStoicQuotes(unittest.TestCase):
         # Should contain zen emoji
         self.assertTrue(any(emoji in message for emoji in ["🧘", "💭", "🌊", "⚖️", "🎯"]))
 
-    def test_generate_stoic_message_with_developer_wisdom(self):
-        """Test generating stoic message with developer wisdom."""
-        message = generate_stoic_message(use_developer_wisdom=True)
+    def test_generate_stoic_message_with_general_wisdom(self):
+        """Test generating stoic message with general wisdom."""
+        message = generate_stoic_message(use_general_wisdom=True, use_ollama=False)
         self.assertIsInstance(message, str)
         self.assertGreater(len(message), 0)
         self.assertTrue(message.startswith("🧘"))
@@ -192,34 +177,20 @@ class TestStoicQuoteContent(unittest.TestCase):
             self.assertGreater(len(quote["text"]), 10)  # Meaningful quote length
             self.assertGreater(len(quote["author"]), 0)
 
-    def test_developer_wisdom_content(self):
-        """Test that developer wisdom contains relevant terms."""
-        from lib.stoic_quotes import DEVELOPER_STOIC_WISDOM
+    def test_general_wisdom_content(self):
+        """Test that general wisdom has meaningful content."""
+        from lib.stoic_quotes import GENERAL_STOIC_WISDOM
 
-        developer_terms = [
-            "code",
-            "bug",
-            "programming",
-            "developer",
-            "git",
-            "test",
-            "merge",
-            "review",
-            "production",
-            "compiler",
-            "legacy",
-            "deadline",
-            "stack",
-            "overflow",
-        ]
+        # Verify we have a reasonable number of wisdom statements
+        self.assertGreater(len(GENERAL_STOIC_WISDOM), 5)
 
-        for wisdom in DEVELOPER_STOIC_WISDOM:
+        for wisdom in GENERAL_STOIC_WISDOM:
             self.assertIsInstance(wisdom, str)
             self.assertGreater(len(wisdom), 20)  # Meaningful wisdom length
-            # At least one developer-related term should be present
+            # Wisdom should be a complete sentence (ends with punctuation)
             self.assertTrue(
-                any(term in wisdom.lower() for term in developer_terms),
-                f"Wisdom should contain developer terms: {wisdom}",
+                wisdom.endswith(".") or wisdom.endswith("!") or wisdom.endswith("?"),
+                f"Wisdom should be a complete sentence: {wisdom}",
             )
 
     def test_theme_distribution(self):
