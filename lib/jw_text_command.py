@@ -15,7 +15,7 @@ from typing import Optional, Tuple
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from lib.lm_studio import generate_with_model, LMStudioModelManager
+from lib.lm_studio import LMStudioModelManager, generate_with_model
 
 # Fallback encouraging messages
 FALLBACK_ENCOURAGEMENT = [

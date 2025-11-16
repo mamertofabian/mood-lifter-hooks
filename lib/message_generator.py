@@ -459,7 +459,6 @@ def _apply_config_formatting(message: str, config: Optional[Any]) -> str:
 
     # Apply max length only if configured and not from LM Studio
     # LM Studio responses should be kept as-is since the AI was instructed on length
-    max_length = config.get_max_message_length()
     # Note: We could add a flag to know if message came from LM Studio
     # For now, we'll skip truncation entirely to respect AI output
 

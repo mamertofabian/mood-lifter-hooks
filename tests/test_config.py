@@ -125,7 +125,6 @@ class TestConfig(unittest.TestCase):
         """Test time-based preferences."""
         config = Config()
 
-
         with patch("datetime.datetime") as mock_datetime:
             # Test morning
             mock_now = MagicMock()

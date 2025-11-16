@@ -3,14 +3,14 @@
 On-demand joke generator for Claude Code slash command
 """
 
+import os
 import random
 import sys
-import os
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from lib.lm_studio import generate_with_model, LMStudioModelManager
+from lib.lm_studio import LMStudioModelManager, generate_with_model
 
 # Extensive collection of developer jokes
 FALLBACK_JOKES = [

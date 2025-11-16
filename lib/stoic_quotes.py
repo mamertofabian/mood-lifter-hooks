@@ -244,7 +244,9 @@ def enhance_stoic_quote_with_lm_studio(
 
 
 def generate_pure_stoic_wisdom(
-    event_type: str = "SessionStart", theme: Optional[str] = None, model: str = "llama-3.2-1b-instruct"
+    event_type: str = "SessionStart",
+    theme: Optional[str] = None,
+    model: str = "llama-3.2-1b-instruct",
 ) -> Optional[str]:
     """
     Generate original stoic wisdom from scratch using LM Studio.
