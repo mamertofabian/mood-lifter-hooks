@@ -7,7 +7,6 @@ Fetches daily text from JW.org and creates developer-focused encouragement.
 import os
 import random
 import re
-import subprocess
 import sys
 from datetime import datetime, timedelta
 from typing import Dict, Optional
@@ -17,6 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from lib.api_integrations import APIClient
 from lib.constants import Timeouts
+from lib.lm_studio import generate_with_model
 
 
 class JWDailyTextClient:
@@ -184,15 +184,15 @@ class JWDailyTextClient:
 
 
 def create_developer_encouragement(
-    daily_text: Dict, use_lm_studio: bool = True, model: str = "llama3.2:latest"
+    daily_text: Dict, use_lm_studio: bool = True, model: str = "llama-3.2-1b-instruct"
 ) -> str:
     """
     Create spiritual encouragement from daily text.
 
     Args:
         daily_text: Daily text data
-        use_lm_studio: Whether to use ollama for enhancement
-        model: Ollama model to use
+        use_lm_studio: Whether to use LM Studio for enhancement
+        model: LM Studio model to use
 
     Returns:
         Encouraging message
@@ -208,7 +208,7 @@ def create_developer_encouragement(
     scripture_display = scripture if scripture else ""
 
     if use_lm_studio:
-        # Create a prompt for ollama to summarize the daily text
+        # Create a prompt for LM Studio to summarize the daily text
         # Keep it pure - just summarize the spiritual message without programming context
         # Include both scripture and commentary for full context
         full_text = (
@@ -220,31 +220,28 @@ def create_developer_encouragement(
         prompt = f"""Daily text to summarize:
 {full_text}
 
-Summarize the main spiritual message in one to three concise, encouraging sentences. 
+Summarize the main spiritual message in one to three concise, encouraging sentences.
 Keep the original spiritual essence.
 
 IMPORTANT: Just output the summary, DO NOT include any other text (e.g., metadata like sentence count, etc).
 """
 
-        try:
-            result = subprocess.run(
-                ["ollama", "run", model, "--verbose=false"],
-                input=prompt,
-                text=True,
-                capture_output=True,
-                timeout=Timeouts.OLLAMA_NORMAL,
-            )
+        # Use LM Studio HTTP API
+        summary = generate_with_model(
+            prompt=prompt,
+            model=model,
+            timeout=Timeouts.LLM_NORMAL,
+            temperature=0.7,
+            max_tokens=100,
+        )
 
-            if result.returncode == 0 and result.stdout:
-                summary = result.stdout.strip()
-                header = "📖 Today's spiritual encouragement:\n"
-                # Include the scripture text followed by the summary
-                if scripture_display:
-                    return f"{header}{scripture_display}\n{summary}"
-                else:
-                    return f"{header}{summary}"
-        except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
-            pass
+        if summary:
+            header = "📖 Today's spiritual encouragement:\n"
+            # Include the scripture text followed by the summary
+            if scripture_display:
+                return f"{header}{scripture_display}\n{summary}"
+            else:
+                return f"{header}{summary}"
 
     # Fallback messages that include the scripture text
     if scripture_display:
@@ -310,13 +307,13 @@ def test_jw_client():
         # Test message generation
         print("\nGenerating developer encouragement...")
 
-        # Without ollama
+        # Without LM Studio
         message = create_developer_encouragement(today_text, use_lm_studio=False)
-        print(f"Without ollama: {message}")
+        print(f"Without LM Studio: {message}")
 
-        # With ollama (if available)
+        # With LM Studio (if available)
         message = create_developer_encouragement(today_text, use_lm_studio=True)
-        print(f"With ollama: {message}")
+        print(f"With LM Studio: {message}")
     else:
         print("Failed to fetch daily text")
 

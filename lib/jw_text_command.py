@@ -3,13 +3,19 @@
 On-demand JW Daily Text display for Claude Code slash command
 """
 
+import os
 import random
 import re
-import subprocess
+import sys
 import urllib.parse
 import urllib.request
 from datetime import datetime
 from typing import Optional, Tuple
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from lib.lm_studio import generate_with_model, LMStudioModelManager
 
 # Fallback encouraging messages
 FALLBACK_ENCOURAGEMENT = [
@@ -86,42 +92,33 @@ def fetch_daily_text() -> Tuple[Optional[str], Optional[str]]:
 
 
 def generate_developer_encouragement(scripture: str, text: str) -> str:
-    """Generate developer-focused encouragement using ollama"""
+    """Generate developer-focused encouragement using LM Studio"""
     try:
-        # Check if ollama is available
-        result = subprocess.run(["ollama", "list"], capture_output=True, text=True, timeout=2)
+        # Check if LM Studio is available
+        manager = LMStudioModelManager()
 
-        if result.returncode != 0:
+        if not manager.is_available():
             return random.choice(FALLBACK_ENCOURAGEMENT)
 
-        # Parse available models
-        models = []
-        for line in result.stdout.strip().split("\n")[1:]:  # Skip header
-            if line:
-                model_name = line.split()[0]
-                models.append(model_name)
-
-        if not models:
-            return random.choice(FALLBACK_ENCOURAGEMENT)
-
-        # Select lightweight model
-        preferred_models = ["llama3.2:latest", "mistral:7b-instruct", "llama3.2:1b"]
-        model = next(
-            (m for m in preferred_models if any(m.startswith(pm.split(":")[0]) for pm in models)),
-            models[0],
-        )
+        # Select a model
+        model = manager.select_model()
 
         # Generate encouragement
         prompt = f"""Based on this scripture: "{scripture}"
-        
+
 Create a very brief (under 30 words) encouraging message for developers that connects this spiritual principle to their coding work. Be practical and uplifting."""
 
-        result = subprocess.run(
-            ["ollama", "run", model, prompt], capture_output=True, text=True, timeout=10
+        encouragement = generate_with_model(
+            prompt=prompt,
+            model=model,
+            manager=manager,
+            timeout=10,
+            temperature=0.7,
+            max_tokens=60,
         )
 
-        if result.returncode == 0 and result.stdout.strip():
-            return "💻 " + result.stdout.strip()
+        if encouragement:
+            return "💻 " + encouragement
         else:
             return random.choice(FALLBACK_ENCOURAGEMENT)
 

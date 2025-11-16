@@ -15,7 +15,7 @@ Thank you for your interest in contributing to Mood Lifter Hooks! This project a
 
 1. Check if the issue already exists
 2. Provide clear description and steps to reproduce
-3. Include relevant system information (OS, Python version, ollama version)
+3. Include relevant system information (OS, Python version, LM Studio version)
 
 ### Submitting Pull Requests
 
@@ -51,7 +51,7 @@ When adding new messages:
 - Include appropriate emojis (but don't overdo it)
 - Ensure they're encouraging and positive
 - Consider different contexts (morning/evening, different events)
-- Test with and without ollama
+- Test with and without LM Studio
 
 ### Priority Areas for Contribution
 
@@ -68,7 +68,7 @@ Before submitting:
 1. Test hooks manually with Claude Code
 2. Verify messages display correctly
 3. Ensure no context pollution
-4. Test with ollama unavailable (fallback mode)
+4. Test with LM Studio unavailable (fallback mode)
 5. Check different event types work as expected
 
 ## Questions?

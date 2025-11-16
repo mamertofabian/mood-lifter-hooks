@@ -13,9 +13,9 @@ class Timeouts:
     JW_API = 20  # JW.org API needs longer timeout for reliability
     EXTERNAL_APIS = 10  # Jokes, quotes APIs - fast fail preferred
 
-    # Ollama model timeouts
+    # LM Studio model timeouts
     LLM_QUICK = 10  # Quick responses for hook messages
-    LLM_NORMAL = 20  # Normal ollama generation
+    LLM_NORMAL = 20  # Normal LLM generation
     LLM_DOWNLOAD = 300  # Model download timeout (5 minutes)
 
     # API client defaults
@@ -41,7 +41,7 @@ class MessageLimits:
     """Message length constraints."""
 
     MAX_LENGTH = 120  # Maximum message length (configurable)
-    LLM_WORD_LIMIT = 20  # Word limit for ollama prompts
+    LLM_WORD_LIMIT = 20  # Word limit for LLM prompts
 
 
 # File Paths and Defaults

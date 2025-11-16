@@ -4,7 +4,13 @@ On-demand joke generator for Claude Code slash command
 """
 
 import random
-import subprocess
+import sys
+import os
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from lib.lm_studio import generate_with_model, LMStudioModelManager
 
 # Extensive collection of developer jokes
 FALLBACK_JOKES = [
@@ -36,31 +42,17 @@ FALLBACK_JOKES = [
 ]
 
 
-def generate_joke_with_ollama():
-    """Try to generate a joke using ollama"""
+def generate_joke_with_lm_studio():
+    """Try to generate a joke using LM Studio"""
     try:
-        # Check if ollama is available
-        result = subprocess.run(["ollama", "list"], capture_output=True, text=True, timeout=2)
+        # Check if LM Studio is available
+        manager = LMStudioModelManager()
 
-        if result.returncode != 0:
+        if not manager.is_available():
             return None
 
-        # Parse available models
-        models = []
-        for line in result.stdout.strip().split("\n")[1:]:  # Skip header
-            if line:
-                model_name = line.split()[0]
-                models.append(model_name)
-
-        if not models:
-            return None
-
-        # Select lightweight model
-        preferred_models = ["llama3.2:latest", "mistral:7b-instruct", "llama3.2:1b", "gemma2:2b"]
-        model = next(
-            (m for m in preferred_models if any(m.startswith(pm.split(":")[0]) for pm in models)),
-            models[0],
-        )
+        # Select a model
+        model = manager.select_model()
 
         # Generate joke
         prompts = [
@@ -73,12 +65,16 @@ def generate_joke_with_ollama():
 
         prompt = random.choice(prompts)
 
-        result = subprocess.run(
-            ["ollama", "run", model, prompt], capture_output=True, text=True, timeout=10
+        joke = generate_with_model(
+            prompt=prompt,
+            model=model,
+            manager=manager,
+            timeout=10,
+            temperature=0.9,
+            max_tokens=100,
         )
 
-        if result.returncode == 0 and result.stdout.strip():
-            joke = result.stdout.strip()
+        if joke:
             # Add a random emoji for fun
             emojis = ["😄", "🎭", "😂", "🤓", "💻", "🐛", "🚀", "☕", "🤖", "🎪", "✨"]
             return f"{random.choice(emojis)} {joke}"
@@ -91,10 +87,10 @@ def generate_joke_with_ollama():
 
 def main():
     """Main function to display a joke"""
-    # Try ollama first
-    joke = generate_joke_with_ollama()
+    # Try LM Studio first
+    joke = generate_joke_with_lm_studio()
 
-    # Fall back to pre-written jokes if ollama fails
+    # Fall back to pre-written jokes if LM Studio fails
     if not joke:
         joke = random.choice(FALLBACK_JOKES)
 

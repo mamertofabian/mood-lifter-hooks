@@ -61,7 +61,7 @@ while [[ $# -gt 0 ]]; do
             INSTALL_HOOKS=false
             shift
             ;;
-        --no-lms|--no-ollama)
+        --no-lms)
             SKIP_LMS=true
             shift
             ;;

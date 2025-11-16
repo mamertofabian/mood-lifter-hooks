@@ -143,7 +143,7 @@ class Config:
         Get configuration value by dot-separated path.
 
         Args:
-            key_path: Dot-separated configuration key (e.g., "ollama.enabled")
+            key_path: Dot-separated configuration key (e.g., "lm_studio.enabled")
             default: Default value if key not found
 
         Returns:
@@ -346,7 +346,7 @@ def test_config():
 
     print("\n1. Basic Settings:")
     print(f"   Enabled: {config.is_enabled()}")
-    print(f"   Ollama enabled: {config.is_lm_studio_enabled()}")
+    print(f"   LM Studio enabled: {config.is_lm_studio_enabled()}")
     print(f"   Use variety: {config.use_lm_studio_variety()}")
 
     print("\n2. Preferred Models:")

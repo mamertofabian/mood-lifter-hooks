@@ -173,8 +173,8 @@ class JokeQuoteClient:
         return None
 
 
-def enhance_with_ollama(
-    content: Dict[str, str], event_type: str = "SessionStart", model: str = "llama3.2:latest"
+def enhance_with_lm_studio(
+    content: Dict[str, str], event_type: str = "SessionStart", model: str = "llama-3.2-1b-instruct"
 ) -> str:
     """
     Present joke or quote in clean format - no enhancement needed.
@@ -183,7 +183,7 @@ def enhance_with_ollama(
     Args:
         content: Content dictionary from API
         event_type: Type of event (not used, kept for compatibility)
-        model: Ollama model to use (not used, kept for compatibility)
+        model: LM Studio model to use (not used, kept for compatibility)
 
     Returns:
         Formatted content
@@ -214,7 +214,7 @@ def generate_external_message(
     Args:
         event_type: Type of event
         content_type: Type of content to fetch ('joke', 'quote', or None)
-        use_lm_studio: Whether to enhance with ollama
+        use_lm_studio: Whether to enhance with LM Studio
 
     Returns:
         Message or None on error
@@ -228,9 +228,9 @@ def generate_external_message(
         return None
 
     if use_lm_studio:
-        return enhance_with_ollama(content, event_type)
+        return enhance_with_lm_studio(content, event_type)
     else:
-        # Return formatted content without ollama
+        # Return formatted content without LM Studio
         if content.get("type") == "joke":
             return f"😄 {content['content'][:100]}"
         else:
@@ -315,11 +315,11 @@ def test_external_apis():
 
     # Test message generation
     print("\n5. Message Generation:")
-    print("   Without ollama:")
+    print("   Without LM Studio:")
     msg = generate_external_message(use_lm_studio=False)
     print(f"   {msg}")
 
-    print("\n   With ollama:")
+    print("\n   With LM Studio:")
     msg = generate_external_message(use_lm_studio=True)
     print(f"   {msg}")
 

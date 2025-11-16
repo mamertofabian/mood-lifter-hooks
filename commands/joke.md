@@ -9,4 +9,4 @@ allowed-tools: Bash(python3:*)
 
 ---
 
-*Displays a random programming joke to brighten your coding session! Uses ollama for creative jokes when available, with quality fallbacks.*
+*Displays a random programming joke to brighten your coding session! Uses LM Studio for creative jokes when available, with quality fallbacks.*

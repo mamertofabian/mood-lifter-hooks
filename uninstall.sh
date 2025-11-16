@@ -224,7 +224,6 @@ if [ "$REMOVE_SCRIPTS" = true ]; then
             "jw_daily_text.py"
             "jw_text_command.py"
             "message_generator.py"
-            "ollama_models.py"
             "rate_limiter.py"
             "stoic_quotes.py"
         )

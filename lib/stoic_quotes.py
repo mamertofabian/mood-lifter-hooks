@@ -303,7 +303,7 @@ def generate_stoic_message(
 
     Args:
         event_type: Type of event
-        use_lm_studio: Whether to use ollama (for enhancement or pure generation)
+        use_lm_studio: Whether to use LM Studio (for enhancement or pure generation)
         theme: Optional theme filter
         use_general_wisdom: If True, use general stoic wisdom statements
         pure_generation_ratio: Ratio of pure LLM generation vs quote-based (0.0-1.0)
@@ -312,7 +312,7 @@ def generate_stoic_message(
         Stoic wisdom message
     """
     if use_general_wisdom:
-        # Use general wisdom directly (doesn't need ollama)
+        # Use general wisdom directly (doesn't need LM Studio)
         wisdom = get_general_stoic_wisdom()
         return f"🧘 {wisdom}"
 
@@ -330,7 +330,7 @@ def generate_stoic_message(
     if use_lm_studio:
         return enhance_stoic_quote_with_lm_studio(quote, event_type)
     else:
-        # Return formatted quote without ollama
+        # Return formatted quote without LM Studio
         return f"🧘 \"{quote['text']}\" - {quote['author']}"
 
 

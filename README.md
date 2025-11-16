@@ -186,7 +186,7 @@ Edit `config/defaults.json` to prefer different models:
 ```json
 {
   "mood_lifter_hooks": {
-    "ollama": {
+    "lm_studio": {
       "preferred_models": [
         "llama-3.2-1b-instruct",
         "qwen2.5-7b-instruct",
