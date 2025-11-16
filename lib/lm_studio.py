@@ -4,19 +4,21 @@ LM Studio model management for Mood Lifter Hooks.
 Uses LM Studio's OpenAI-compatible HTTP API for message generation.
 """
 
-import requests
 import random
-import json
-from typing import Optional, List, Dict
+import re
 from datetime import datetime, timedelta
+from typing import Dict, List, Optional
+
+import requests
 
 try:
-    from lib.constants import Timeouts, Defaults
+    from lib.constants import Defaults, Timeouts
 except ImportError:
     # Fallback constants if imports fail
     class Timeouts:
         OLLAMA_NORMAL = 5
         OLLAMA_QUICK = 3
+
     class Defaults:
         pass
 
@@ -70,10 +72,7 @@ class LMStudioModelManager:
             True if LM Studio API is accessible
         """
         try:
-            response = requests.get(
-                f"{self.base_url}/models",
-                timeout=2
-            )
+            response = requests.get(f"{self.base_url}/models", timeout=2)
             return response.status_code == 200
         except (requests.RequestException, requests.ConnectionError, requests.Timeout):
             return False
@@ -92,10 +91,7 @@ class LMStudioModelManager:
             return self._cached_models
 
         try:
-            response = requests.get(
-                f"{self.base_url}/models",
-                timeout=Timeouts.OLLAMA_NORMAL
-            )
+            response = requests.get(f"{self.base_url}/models", timeout=Timeouts.OLLAMA_NORMAL)
 
             if response.status_code == 200:
                 data = response.json()
@@ -170,7 +166,9 @@ class LMStudioModelManager:
             # If a model is already loaded, use it to avoid loading overhead
             if loaded_model:
                 self._last_used_model = loaded_model
-                self._model_usage_count[loaded_model] = self._model_usage_count.get(loaded_model, 0) + 1
+                self._model_usage_count[loaded_model] = (
+                    self._model_usage_count.get(loaded_model, 0) + 1
+                )
                 return loaded_model
 
         # If no model is loaded, try to find a recommended one
@@ -217,13 +215,49 @@ class LMStudioModelManager:
         return selected
 
 
+def clean_thinking_tags(text: str) -> str:
+    """
+    Remove thinking tags from LLM responses.
+
+    Handles various thinking tag formats:
+    - <think>...</think>
+    - <thinking>...</thinking>
+    - <thought>...</thought>
+
+    Args:
+        text: The text to clean
+
+    Returns:
+        Cleaned text with thinking tags removed
+    """
+    if not text:
+        return text
+
+    # Remove thinking tags and their content (case-insensitive, handles newlines)
+    patterns = [
+        r"<think>.*?</think>",
+        r"<thinking>.*?</thinking>",
+        r"<thought>.*?</thought>",
+    ]
+
+    cleaned = text
+    for pattern in patterns:
+        cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE | re.DOTALL)
+
+    # Clean up extra whitespace and newlines
+    cleaned = re.sub(r"\n\s*\n+", "\n", cleaned)  # Remove multiple blank lines
+    cleaned = cleaned.strip()
+
+    return cleaned
+
+
 def generate_with_model(
     prompt: str,
     model: Optional[str] = None,
     manager: Optional[LMStudioModelManager] = None,
     timeout: int = 3,
     temperature: float = 0.7,
-    max_tokens: int = 50
+    max_tokens: int = 50,
 ) -> Optional[str]:
     """
     Generate text using LM Studio's OpenAI-compatible API.
@@ -251,25 +285,22 @@ def generate_with_model(
             f"{manager.base_url}/chat/completions",
             json={
                 "model": model,
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
+                "messages": [{"role": "user", "content": prompt}],
                 "temperature": temperature,
                 "max_tokens": max_tokens,
-                "stream": False
+                "stream": False,
             },
-            timeout=timeout
+            timeout=timeout,
         )
 
         if response.status_code == 200:
             data = response.json()
             if "choices" in data and len(data["choices"]) > 0:
                 message = data["choices"][0]["message"]["content"].strip()
+                # Remove thinking tags from the response
+                message = clean_thinking_tags(message)
                 # Take first line only for hook messages
-                message = message.split('\n')[0].strip()
+                message = message.split("\n")[0].strip()
                 return message
 
     except (requests.RequestException, requests.ConnectionError, requests.Timeout):
@@ -342,7 +373,7 @@ def test_model_manager():
         if message:
             print(f"   → {message}")
         else:
-            print(f"   → (Generation failed)")
+            print("   → (Generation failed)")
     else:
         print("\n   Skipping generation test (no model loaded)")
 
