@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from lib.stoic_quotes import (
-    enhance_stoic_quote_with_ollama,
+    enhance_stoic_quote_with_lm_studio,
     generate_pure_stoic_wisdom,
     generate_stoic_message,
     get_fallback_stoic_message,
@@ -72,9 +72,9 @@ class TestStoicQuotes(unittest.TestCase):
         # Should contain zen emoji
         self.assertTrue(any(emoji in message for emoji in ["🧘", "💭", "🌊", "⚖️", "🎯"]))
 
-    def test_generate_stoic_message_without_ollama(self):
-        """Test generating stoic message without ollama."""
-        message = generate_stoic_message(use_ollama=False)
+    def test_generate_stoic_message_without_lm_studio(self):
+        """Test generating stoic message without LM Studio."""
+        message = generate_stoic_message(use_lm_studio=False)
         self.assertIsInstance(message, str)
         self.assertGreater(len(message), 0)
         # Should contain zen emoji
@@ -82,52 +82,52 @@ class TestStoicQuotes(unittest.TestCase):
 
     def test_generate_stoic_message_with_general_wisdom(self):
         """Test generating stoic message with general wisdom."""
-        message = generate_stoic_message(use_general_wisdom=True, use_ollama=False)
+        message = generate_stoic_message(use_general_wisdom=True, use_lm_studio=False)
         self.assertIsInstance(message, str)
         self.assertGreater(len(message), 0)
         self.assertTrue(message.startswith("🧘"))
 
     @patch("subprocess.run")
-    def test_generate_stoic_message_with_ollama(self, mock_run):
-        """Test generating stoic message with ollama (mocked)."""
-        # Mock successful ollama response
+    def test_generate_stoic_message_with_lm_studio(self, mock_run):
+        """Test generating stoic message with LM Studio (mocked)."""
+        # Mock successful LM Studio response
         mock_result = MagicMock()
         mock_result.returncode = 0
         mock_result.stdout = "🧘 Stay calm and debug on."
         mock_run.return_value = mock_result
 
-        message = generate_stoic_message(use_ollama=True)
+        message = generate_stoic_message(use_lm_studio=True)
         self.assertIsInstance(message, str)
         self.assertGreater(len(message), 0)
 
     @patch("subprocess.run")
-    def test_enhance_stoic_quote_with_ollama(self, mock_run):
-        """Test enhancing stoic quote with ollama (mocked)."""
-        # Mock successful ollama response
+    def test_enhance_stoic_quote_with_lm_studio(self, mock_run):
+        """Test enhancing stoic quote with LM Studio (mocked)."""
+        # Mock successful LM Studio response
         mock_result = MagicMock()
         mock_result.returncode = 0
         mock_result.stdout = "🧘 Apply this wisdom to your coding challenges."
         mock_run.return_value = mock_result
 
         quote = {"text": "Control what you can", "author": "Marcus Aurelius"}
-        message = enhance_stoic_quote_with_ollama(quote)
+        message = enhance_stoic_quote_with_lm_studio(quote)
         self.assertIsInstance(message, str)
         self.assertGreater(len(message), 0)
 
-    def test_enhance_stoic_quote_with_ollama_fallback(self):
-        """Test enhancing stoic quote with ollama fallback."""
+    def test_enhance_stoic_quote_with_lm_studio_fallback(self):
+        """Test enhancing stoic quote with LM Studio fallback."""
         quote = {"text": "Control what you can", "author": "Marcus Aurelius"}
 
         with patch("subprocess.run", side_effect=FileNotFoundError):
-            message = enhance_stoic_quote_with_ollama(quote)
+            message = enhance_stoic_quote_with_lm_studio(quote)
             self.assertIsInstance(message, str)
             self.assertGreater(len(message), 0)
             self.assertIn("Control what you can", message)
 
     @patch("subprocess.run")
     def test_generate_pure_stoic_wisdom(self, mock_run):
-        """Test generating pure stoic wisdom with ollama (mocked)."""
-        # Mock successful ollama response
+        """Test generating pure stoic wisdom with LM Studio (mocked)."""
+        # Mock successful LM Studio response
         mock_result = MagicMock()
         mock_result.returncode = 0
         mock_result.stdout = "🧘 The bug teaches patience, the fix rewards persistence."

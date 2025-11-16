@@ -3,9 +3,8 @@
 On-demand joke generator for Claude Code slash command
 """
 
-import subprocess
 import random
-import sys
+import subprocess
 
 # Extensive collection of developer jokes
 FALLBACK_JOKES = [
@@ -33,81 +32,79 @@ FALLBACK_JOKES = [
     "📝 Documentation? We don't need documentation. The code is self-documenting! (Famous last words) 📚",
     "🎭 I told my wife I'd be home in a minute. That was before I started debugging... ⏰",
     "🔨 When all you have is a hammer, everything looks like a nail. When all you know is JavaScript, everything looks like a JSON! 🔧",
-    "🌟 The best thing about a Boolean is that even if you're wrong, you're only off by a bit! 💡"
+    "🌟 The best thing about a Boolean is that even if you're wrong, you're only off by a bit! 💡",
 ]
+
 
 def generate_joke_with_ollama():
     """Try to generate a joke using ollama"""
     try:
         # Check if ollama is available
-        result = subprocess.run(
-            ['ollama', 'list'], 
-            capture_output=True, 
-            text=True, 
-            timeout=2
-        )
-        
+        result = subprocess.run(["ollama", "list"], capture_output=True, text=True, timeout=2)
+
         if result.returncode != 0:
             return None
-        
+
         # Parse available models
         models = []
-        for line in result.stdout.strip().split('\n')[1:]:  # Skip header
+        for line in result.stdout.strip().split("\n")[1:]:  # Skip header
             if line:
                 model_name = line.split()[0]
                 models.append(model_name)
-        
+
         if not models:
             return None
-        
+
         # Select lightweight model
-        preferred_models = ['llama3.2:latest', 'mistral:7b-instruct', 'llama3.2:1b', 'gemma2:2b']
-        model = next((m for m in preferred_models if any(m.startswith(pm.split(':')[0]) for pm in models)), models[0])
-        
+        preferred_models = ["llama3.2:latest", "mistral:7b-instruct", "llama3.2:1b", "gemma2:2b"]
+        model = next(
+            (m for m in preferred_models if any(m.startswith(pm.split(":")[0]) for pm in models)),
+            models[0],
+        )
+
         # Generate joke
         prompts = [
             "Tell me a short, hilariously relatable programming joke. Keep it under 50 words. Be creative and witty. Only output the joke, no metadata.",
             "Share a witty developer joke about debugging nightmares, git disasters, or coding chaos. Maximum 50 words. Only output the joke, no metadata.",
             "Create a clever programming pun that'll make developers groan and laugh. Keep it brief and punchy. Only output the joke, no metadata.",
             "Tell a funny story about a programmer's daily struggles in under 50 words. Make it ridiculously relatable. Only output the story, no metadata.",
-            "Share a tech joke about JavaScript quirks, Python indentation, or any programming language weirdness. Be hilarious. Only output the joke, no metadata."
+            "Share a tech joke about JavaScript quirks, Python indentation, or any programming language weirdness. Be hilarious. Only output the joke, no metadata.",
         ]
-        
+
         prompt = random.choice(prompts)
-        
+
         result = subprocess.run(
-            ['ollama', 'run', model, prompt],
-            capture_output=True,
-            text=True,
-            timeout=10
+            ["ollama", "run", model, prompt], capture_output=True, text=True, timeout=10
         )
-        
+
         if result.returncode == 0 and result.stdout.strip():
             joke = result.stdout.strip()
             # Add a random emoji for fun
-            emojis = ['😄', '🎭', '😂', '🤓', '💻', '🐛', '🚀', '☕', '🤖', '🎪', '✨']
+            emojis = ["😄", "🎭", "😂", "🤓", "💻", "🐛", "🚀", "☕", "🤖", "🎪", "✨"]
             return f"{random.choice(emojis)} {joke}"
-        
+
         return None
-            
+
     except Exception:
         return None
+
 
 def main():
     """Main function to display a joke"""
     # Try ollama first
     joke = generate_joke_with_ollama()
-    
+
     # Fall back to pre-written jokes if ollama fails
     if not joke:
         joke = random.choice(FALLBACK_JOKES)
-    
+
     print("\n" + "=" * 50)
     print("😄 Developer Joke of the Moment")
     print("=" * 50 + "\n")
     print(joke)
     print("\n" + "=" * 50)
     print("Keep coding with a smile! 😊\n")
+
 
 if __name__ == "__main__":
     main()

@@ -60,15 +60,15 @@ class TestMessageGenerator(unittest.TestCase):
         self.assertIsInstance(message, str)
         self.assertGreater(len(message), 0)
 
-    def test_generate_message_without_ollama(self):
-        """Test message generation without ollama."""
-        # Generate message without ollama
-        message = generate_message("SessionStart", use_ollama=False)
+    def test_generate_message_without_lm_studio(self):
+        """Test message generation without LM Studio."""
+        # Generate message without LM Studio
+        message = generate_message("SessionStart", use_lm_studio=False)
         self.assertIsInstance(message, str)
         self.assertGreater(len(message), 0)
 
     @patch("lib.lm_studio.requests.post")
-    def test_generate_message_with_ollama(self, mock_post):
+    def test_generate_message_with_lm_studio(self, mock_post):
         """Test message generation with LM Studio (mocked)."""
         # Mock successful LM Studio API response
         mock_response = MagicMock()
@@ -79,7 +79,7 @@ class TestMessageGenerator(unittest.TestCase):
         mock_post.return_value = mock_response
 
         # Force 'default' message source to ensure LM Studio is called
-        message = generate_message("SessionStart", use_ollama=True, message_source="default")
+        message = generate_message("SessionStart", use_lm_studio=True, message_source="default")
         self.assertIsInstance(message, str)
         self.assertIn("Keep coding", message)
 
@@ -134,8 +134,8 @@ class TestMessageGenerator(unittest.TestCase):
 
         # Should return message when probability check passes
         mock_config.should_show_message.return_value = True
-        mock_config.is_ollama_enabled.return_value = False
-        mock_config.use_ollama_variety.return_value = False
+        mock_config.is_lm_studio_enabled.return_value = False
+        mock_config.use_lm_studio_variety.return_value = False
         mock_config.get_message_source_weights.return_value = {"default": 100}
         mock_config.get_preferred_sources_for_time.return_value = ["default"]
         mock_config.get_max_message_length.return_value = 120
@@ -155,7 +155,7 @@ class TestMessageSources(unittest.TestCase):
         """Test JW daily text message source."""
         mock_jw.return_value = "Daily wisdom for developers"
 
-        message = generate_message("SessionStart", message_source="jw", use_ollama=False)
+        message = generate_message("SessionStart", message_source="jw", use_lm_studio=False)
         self.assertEqual(message, "Daily wisdom for developers")
         mock_jw.assert_called_once()
 
@@ -165,9 +165,11 @@ class TestMessageSources(unittest.TestCase):
         """Test joke message source."""
         mock_external.return_value = "Why do programmers prefer dark mode? Light attracts bugs!"
 
-        message = generate_message("SessionStart", message_source="joke", use_ollama=False)
+        message = generate_message("SessionStart", message_source="joke", use_lm_studio=False)
         self.assertIn("bugs", message)
-        mock_external.assert_called_once_with("SessionStart", content_type="joke", use_ollama=False)
+        mock_external.assert_called_once_with(
+            "SessionStart", content_type="joke", use_lm_studio=False
+        )
 
     @patch("lib.message_generator.API_FEATURES_AVAILABLE", True)
     @patch("lib.message_generator.generate_external_message")
@@ -175,10 +177,10 @@ class TestMessageSources(unittest.TestCase):
         """Test quote message source."""
         mock_external.return_value = '"Code is poetry" - Someone'
 
-        message = generate_message("SessionStart", message_source="quote", use_ollama=False)
+        message = generate_message("SessionStart", message_source="quote", use_lm_studio=False)
         self.assertIn("poetry", message)
         mock_external.assert_called_once_with(
-            "SessionStart", content_type="quote", use_ollama=False
+            "SessionStart", content_type="quote", use_lm_studio=False
         )
 
     @patch("lib.message_generator.API_FEATURES_AVAILABLE", True)
@@ -187,10 +189,10 @@ class TestMessageSources(unittest.TestCase):
         """Test stoic quotes message source."""
         mock_stoic.return_value = "🧘 Control what you can: your code, your response, your calm."
 
-        message = generate_message("SessionStart", message_source="stoic", use_ollama=False)
+        message = generate_message("SessionStart", message_source="stoic", use_lm_studio=False)
         self.assertIn("🧘", message)
         self.assertIn("calm", message)
-        mock_stoic.assert_called_once_with("SessionStart", use_ollama=False)
+        mock_stoic.assert_called_once_with("SessionStart", use_lm_studio=False)
 
 
 if __name__ == "__main__":

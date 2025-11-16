@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 """
 Message generator module for Mood Lifter Hooks.
-Generates encouraging messages using ollama with fallback options.
+Generates encouraging messages using LM Studio with fallback options.
 Now with external API integration and JW daily text support.
 """
 
-import subprocess
-import random
-import json
-import sys
 import os
+import random
+import sys
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 # Add parent directory to path for imports when run directly
 if __name__ == "__main__":
@@ -29,49 +27,79 @@ if os.path.exists(PROJECT_DIR) and PROJECT_DIR not in sys.path:
 
 # Try importing from lib, with fallback values
 try:
-    from lib.constants import Timeouts, MessageLimits
+    from lib.constants import MessageLimits, Timeouts
 except ImportError:
     # Define fallback constants if imports fail
     class Timeouts:
-        OLLAMA_GENERATE = 3.0
-        OLLAMA_QUICK = 2.0  # Reduced timeout for better responsiveness
+        LLM_GENERATE = 3.0
+        LLM_QUICK = 2.0  # Reduced timeout for better responsiveness
         EXTERNAL_API = 2.0
         JW_API = 3.0
-    
+
     class MessageLimits:
         MAX_MESSAGE_LENGTH = 200
         MIN_MESSAGE_LENGTH = 10
 
+
 # Try to import config first (it doesn't require requests)
 try:
     from lib.config import get_config as _get_config_real
+
     CONFIG_AVAILABLE = True
 except ImportError:
     CONFIG_AVAILABLE = False
+
     # Minimal config fallback
     class DummyConfig:
-        def is_enabled(self): return True
-        def is_ollama_enabled(self): return True
-        def use_ollama_variety(self): return False
-        def get_preferred_models(self): return ["llama3.2:latest"]
-        def get_ollama_timeout(self): return 5
-        def get_message_source_weights(self): return {"default": 100}
-        def is_jw_enabled(self): return False
-        def is_external_apis_enabled(self): return False
-        def should_show_message(self, event_type): return True
-        def get_preferred_sources_for_time(self): return ["default"]
-        def get_max_message_length(self): return 120
-        def include_emojis(self): return True
-        def suppress_errors(self): return True
+        def is_enabled(self):
+            return True
+
+        def is_lm_studio_enabled(self):
+            return True
+
+        def use_lm_studio_variety(self):
+            return False
+
+        def get_preferred_models(self):
+            return ["llama-3.2-1b-instruct"]
+
+        def get_lm_studio_timeout(self):
+            return 5
+
+        def get_message_source_weights(self):
+            return {"default": 100}
+
+        def is_jw_enabled(self):
+            return False
+
+        def is_external_apis_enabled(self):
+            return False
+
+        def should_show_message(self, event_type):
+            return True
+
+        def get_preferred_sources_for_time(self):
+            return ["default"]
+
+        def get_max_message_length(self):
+            return 120
+
+        def include_emojis(self):
+            return True
+
+        def suppress_errors(self):
+            return True
 
     def _get_config_real():
         return DummyConfig()
 
+
 # Import API integrations (these require requests module)
 try:
-    from lib.jw_daily_text import generate_jw_message
     from lib.external_apis import generate_external_message, get_fallback_external_message
-    from lib.rate_limiter import should_show_jw_content, mark_jw_content_shown
+    from lib.jw_daily_text import generate_jw_message
+    from lib.rate_limiter import mark_jw_content_shown, should_show_jw_content
+
     JW_AND_EXTERNAL_APIS_AVAILABLE = True
 except ImportError:
     JW_AND_EXTERNAL_APIS_AVAILABLE = False
@@ -79,29 +107,31 @@ except ImportError:
 # Import stoic quotes (doesn't require requests)
 try:
     from lib.stoic_quotes import generate_stoic_message, get_fallback_stoic_message
+
     STOIC_AVAILABLE = True
 except ImportError:
     STOIC_AVAILABLE = False
 
-# Import LM Studio model manager (replaces ollama)
+# Import LM Studio model manager
 try:
     from lib.lm_studio import LMStudioModelManager, generate_with_model
+
     LLM_MANAGER_AVAILABLE = True
 except ImportError:
     LLM_MANAGER_AVAILABLE = False
 
-# Backward compatibility alias
-OLLAMA_MANAGER_AVAILABLE = LLM_MANAGER_AVAILABLE
-
 # For backwards compatibility
 API_FEATURES_AVAILABLE = JW_AND_EXTERNAL_APIS_AVAILABLE
+
 
 def get_config():
     """Get configuration, using real config if available, otherwise dummy."""
     return _get_config_real()
 
+
 # Global model manager instance
 _model_manager = None
+
 
 def get_model_manager():
     """Get or create the global model manager instance."""
@@ -110,7 +140,8 @@ def get_model_manager():
         _model_manager = LMStudioModelManager()
     return _model_manager
 
-# Fallback messages for when ollama is unavailable - general encouragement
+
+# Fallback messages for when LM Studio is unavailable - general encouragement
 FALLBACK_MESSAGES = {
     "SessionStart": [
         "🚀 Ready to create something amazing today!",
@@ -141,12 +172,11 @@ FALLBACK_MESSAGES = {
         "🎯 Stay focused - you're on the right track!",
         "🔥 You're doing amazing work!",
         "🌈 Remember: progress, not perfection!",
-    ]
+    ],
 }
 
 # LLM prompts for different events - general encouragement, not coding-specific
-# (Previously used with Ollama, now used with LM Studio)
-OLLAMA_PROMPTS = {
+LM_STUDIO_PROMPTS = {
     "SessionStart": {
         "morning": "Generate a brief, encouraging morning message to start the day. Include one emoji. Maximum 15 words. Be positive, energizing, and slightly humorous. Only output the message, no metadata.",
         "afternoon": "Generate a brief, encouraging afternoon message. Include one emoji. Maximum 15 words. Be motivating, focused, and add a touch of humor. Only output the message, no metadata.",
@@ -162,7 +192,7 @@ OLLAMA_PROMPTS = {
     },
     "Notification": {
         "default": "Generate a brief, encouraging message for someone working. Include one emoji. Maximum 15 words. Be supportive, motivating, and add some humor. Only output the message, no metadata.",
-    }
+    },
 }
 
 
@@ -177,10 +207,11 @@ def get_time_period() -> str:
         return "evening"
 
 
-def generate_with_ollama(event_type: str, model: Optional[str] = None, use_variety: bool = True) -> Optional[str]:
+def generate_with_lm_studio(
+    event_type: str, model: Optional[str] = None, use_variety: bool = True
+) -> Optional[str]:
     """
-    Generate an encouraging message using LM Studio (formerly Ollama).
-    Function name kept for backward compatibility.
+    Generate an encouraging message using LM Studio.
 
     Args:
         event_type: Type of event (SessionStart, Stop, Notification)
@@ -193,15 +224,15 @@ def generate_with_ollama(event_type: str, model: Optional[str] = None, use_varie
     try:
         # Normalize event type to handle both formats
         event_map = {
-            'start': 'SessionStart',
-            'sessionstart': 'SessionStart',
-            'stop': 'Stop',
-            'notification': 'Notification'
+            "start": "SessionStart",
+            "sessionstart": "SessionStart",
+            "stop": "Stop",
+            "notification": "Notification",
         }
         event_type = event_map.get(event_type.lower(), event_type)
-        
+
         # Get appropriate prompt based on event type and time
-        prompts = OLLAMA_PROMPTS.get(event_type, {})
+        prompts = LM_STUDIO_PROMPTS.get(event_type, {})
 
         if event_type == "SessionStart":
             time_period = get_time_period()
@@ -212,7 +243,7 @@ def generate_with_ollama(event_type: str, model: Optional[str] = None, use_varie
             prompt = prompts[prompt_key]
         else:
             prompt = prompts.get("default", "")
-        
+
         if not prompt:
             return None
 
@@ -229,9 +260,7 @@ def generate_with_ollama(event_type: str, model: Optional[str] = None, use_varie
         # Call LM Studio CLI with the prompt
         if LLM_MANAGER_AVAILABLE:
             message = generate_with_model(
-                prompt=prompt,
-                model=selected_model,
-                timeout=Timeouts.OLLAMA_QUICK
+                prompt=prompt, model=selected_model, timeout=Timeouts.LLM_QUICK
             )
             if message:
                 # Let LLM decide the length, don't truncate
@@ -240,7 +269,7 @@ def generate_with_ollama(event_type: str, model: Optional[str] = None, use_varie
     except Exception:
         # LM Studio not available or failed
         pass
-    
+
     return None
 
 
@@ -248,10 +277,10 @@ def get_fallback_message(event_type: str) -> str:
     """Get a random fallback message for the given event type."""
     # Normalize event type to handle both formats
     event_map = {
-        'start': 'SessionStart',
-        'sessionstart': 'SessionStart',
-        'stop': 'Stop',
-        'notification': 'Notification'
+        "start": "SessionStart",
+        "sessionstart": "SessionStart",
+        "stop": "Stop",
+        "notification": "Notification",
     }
     normalized_type = event_map.get(event_type.lower(), event_type)
     messages = FALLBACK_MESSAGES.get(normalized_type, FALLBACK_MESSAGES["Notification"])
@@ -259,55 +288,55 @@ def get_fallback_message(event_type: str) -> str:
 
 
 def generate_message(
-    event_type: str, 
-    use_ollama: Optional[bool] = None, 
+    event_type: str,
+    use_lm_studio: Optional[bool] = None,
     model: Optional[str] = None,
     message_source: Optional[str] = None,
     use_variety: Optional[bool] = None,
-    use_config: bool = True
+    use_config: bool = True,
 ) -> str:
     """
     Generate an encouraging message for the given event type.
-    
+
     Args:
         event_type: Type of event (SessionStart, Stop, Notification)
-        use_ollama: Whether to try using ollama first (None to use config)
-        model: Specific ollama model to use (None for auto-selection)
+        use_lm_studio: Whether to try using LM Studio first (None to use config)
+        model: Specific LM Studio model to use (None for auto-selection)
         message_source: Optional source preference ('default', 'jw', 'joke', 'quote', None for random)
         use_variety: Whether to use model rotation for variety (None to use config)
         use_config: Whether to use configuration settings
-        
+
     Returns:
         An encouraging message
     """
     # Normalize event type to handle both formats
     event_map = {
-        'start': 'SessionStart',
-        'sessionstart': 'SessionStart',
-        'stop': 'Stop',
-        'notification': 'Notification'
+        "start": "SessionStart",
+        "sessionstart": "SessionStart",
+        "stop": "Stop",
+        "notification": "Notification",
     }
     event_type = event_map.get(event_type.lower(), event_type)
-    
+
     # Load configuration if enabled
     config = get_config() if use_config else None
-    
+
     # Check if we should show a message based on probability
     if config and not config.should_show_message(event_type):
         return ""  # Return empty string if message should be skipped
-    
+
     # Apply configuration defaults if not specified
-    if use_ollama is None:
-        use_ollama = config.is_ollama_enabled() if config else True
+    if use_lm_studio is None:
+        use_lm_studio = config.is_lm_studio_enabled() if config else True
     if use_variety is None:
-        use_variety = config.use_ollama_variety() if config else True
+        use_variety = config.use_lm_studio_variety() if config else True
 
     # Special handling for SessionStart: Always try JW content first if not rate limited
     if JW_AND_EXTERNAL_APIS_AVAILABLE and event_type == "SessionStart" and message_source is None:
         # Check if JW content should be shown (rate limiting)
         if should_show_jw_content():
             # Try JW content first for session start
-            message_source = 'jw'
+            message_source = "jw"
         else:
             # JW content is rate limited, use normal selection
             message_source = None
@@ -319,11 +348,13 @@ def generate_message(
         sources = []
         for source, weight in weights.items():
             # Skip sources that aren't available
-            if source == 'jw' and (not JW_AND_EXTERNAL_APIS_AVAILABLE or not should_show_jw_content()):
+            if source == "jw" and (
+                not JW_AND_EXTERNAL_APIS_AVAILABLE or not should_show_jw_content()
+            ):
                 continue
-            if source in ['joke', 'quote'] and not JW_AND_EXTERNAL_APIS_AVAILABLE:
+            if source in ["joke", "quote"] and not JW_AND_EXTERNAL_APIS_AVAILABLE:
                 continue
-            if source == 'stoic' and not STOIC_AVAILABLE:
+            if source == "stoic" and not STOIC_AVAILABLE:
                 continue
             sources.extend([source] * weight)
 
@@ -334,120 +365,139 @@ def generate_message(
             for source in preferred:
                 if source in weights:
                     # Check availability before boosting
-                    if source == 'jw' and (not JW_AND_EXTERNAL_APIS_AVAILABLE or not should_show_jw_content()):
+                    if source == "jw" and (
+                        not JW_AND_EXTERNAL_APIS_AVAILABLE or not should_show_jw_content()
+                    ):
                         continue
-                    if source in ['joke', 'quote'] and not JW_AND_EXTERNAL_APIS_AVAILABLE:
+                    if source in ["joke", "quote"] and not JW_AND_EXTERNAL_APIS_AVAILABLE:
                         continue
-                    if source == 'stoic' and not STOIC_AVAILABLE:
+                    if source == "stoic" and not STOIC_AVAILABLE:
                         continue
                     sources.extend([source] * 10)
 
-        message_source = random.choice(sources) if sources else 'default'
+        message_source = random.choice(sources) if sources else "default"
     elif message_source is None:
         # Fallback to default weighted selection
-        sources = ['default'] * 3  # 30% chance
+        sources = ["default"] * 3  # 30% chance
         # Only add sources that are available
         if JW_AND_EXTERNAL_APIS_AVAILABLE and should_show_jw_content():
-            sources.extend(['jw'] * 2)  # 20% chance
+            sources.extend(["jw"] * 2)  # 20% chance
         if JW_AND_EXTERNAL_APIS_AVAILABLE:
-            sources.extend(['joke'] * 2)  # 20% chance
-            sources.extend(['quote'] * 1)  # 10% chance
+            sources.extend(["joke"] * 2)  # 20% chance
+            sources.extend(["quote"] * 1)  # 10% chance
         if STOIC_AVAILABLE:
-            sources.extend(['stoic'] * 2)  # 20% chance
+            sources.extend(["stoic"] * 2)  # 20% chance
         message_source = random.choice(sources)
 
     # Try to generate from selected source
-    if message_source == 'jw' and JW_AND_EXTERNAL_APIS_AVAILABLE and (not config or config.is_jw_enabled()):
-        message = generate_jw_message(event_type, use_ollama=use_ollama)
+    if (
+        message_source == "jw"
+        and JW_AND_EXTERNAL_APIS_AVAILABLE
+        and (not config or config.is_jw_enabled())
+    ):
+        message = generate_jw_message(event_type, use_lm_studio=use_lm_studio)
         if message:
             # Mark JW content as shown for rate limiting
             mark_jw_content_shown()
             return _apply_config_formatting(message, config)
-    elif message_source == 'joke' and JW_AND_EXTERNAL_APIS_AVAILABLE and (not config or config.is_external_apis_enabled()):
-        message = generate_external_message(event_type, content_type='joke', use_ollama=use_ollama)
+    elif (
+        message_source == "joke"
+        and JW_AND_EXTERNAL_APIS_AVAILABLE
+        and (not config or config.is_external_apis_enabled())
+    ):
+        message = generate_external_message(
+            event_type, content_type="joke", use_lm_studio=use_lm_studio
+        )
         if message:
             return _apply_config_formatting(message, config)
-    elif message_source == 'quote' and JW_AND_EXTERNAL_APIS_AVAILABLE and (not config or config.is_external_apis_enabled()):
-        message = generate_external_message(event_type, content_type='quote', use_ollama=use_ollama)
+    elif (
+        message_source == "quote"
+        and JW_AND_EXTERNAL_APIS_AVAILABLE
+        and (not config or config.is_external_apis_enabled())
+    ):
+        message = generate_external_message(
+            event_type, content_type="quote", use_lm_studio=use_lm_studio
+        )
         if message:
             return _apply_config_formatting(message, config)
-    elif message_source == 'stoic' and STOIC_AVAILABLE:
-        message = generate_stoic_message(event_type, use_ollama=use_ollama)
+    elif message_source == "stoic" and STOIC_AVAILABLE:
+        message = generate_stoic_message(event_type, use_lm_studio=use_lm_studio)
         if message:
             return _apply_config_formatting(message, config)
     # If source is 'default' or previous attempts failed, continue to default behavior
-    
-    # Default behavior: use ollama or fallback messages
-    if use_ollama:
-        message = generate_with_ollama(event_type, model, use_variety)
+
+    # Default behavior: use LM Studio or fallback messages
+    if use_lm_studio:
+        message = generate_with_lm_studio(event_type, model, use_variety)
         if message:
             return _apply_config_formatting(message, config)
-    
+
     # Fall back to pre-written messages or external fallbacks
-    if JW_AND_EXTERNAL_APIS_AVAILABLE and message_source in ['joke', 'quote']:
+    if JW_AND_EXTERNAL_APIS_AVAILABLE and message_source in ["joke", "quote"]:
         message = get_fallback_external_message(message_source)
-    elif STOIC_AVAILABLE and message_source == 'stoic':
+    elif STOIC_AVAILABLE and message_source == "stoic":
         message = get_fallback_stoic_message()
     else:
         message = get_fallback_message(event_type)
-    
+
     return _apply_config_formatting(message, config)
 
 
 def _apply_config_formatting(message: str, config: Optional[Any]) -> str:
     """
     Apply configuration-based formatting to a message.
-    
+
     Args:
         message: The message to format
         config: Configuration object
-        
+
     Returns:
         Formatted message
     """
     if not config:
         return message
-    
-    # Apply max length only if configured and not from ollama
-    # Ollama responses should be kept as-is since the AI was instructed on length
+
+    # Apply max length only if configured and not from LM Studio
+    # LM Studio responses should be kept as-is since the AI was instructed on length
     max_length = config.get_max_message_length()
-    # Note: We could add a flag to know if message came from ollama
+    # Note: We could add a flag to know if message came from LM Studio
     # For now, we'll skip truncation entirely to respect AI output
-    
+
     # Remove emojis if configured
     if not config.include_emojis():
         # Simple emoji removal (keeps text)
         import re
-        emoji_pattern = re.compile("["
-            u"\U0001F600-\U0001F64F"  # emoticons
-            u"\U0001F300-\U0001F5FF"  # symbols & pictographs
-            u"\U0001F680-\U0001F6FF"  # transport & map symbols
-            u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
-            u"\U00002702-\U000027B0"
-            u"\U000024C2-\U0001F251"
-            "]+", flags=re.UNICODE)
-        message = emoji_pattern.sub('', message).strip()
-    
+
+        emoji_pattern = re.compile(
+            "["
+            "\U0001f600-\U0001f64f"  # emoticons
+            "\U0001f300-\U0001f5ff"  # symbols & pictographs
+            "\U0001f680-\U0001f6ff"  # transport & map symbols
+            "\U0001f1e0-\U0001f1ff"  # flags (iOS)
+            "\U00002702-\U000027b0"
+            "\U000024c2-\U0001f251"
+            "]+",
+            flags=re.UNICODE,
+        )
+        message = emoji_pattern.sub("", message).strip()
+
     return message
 
 
 def format_hook_output(message: str, event_type: str) -> Dict:
     """
     Format the message for proper hook output based on event type.
-    
+
     Args:
         message: The encouragement message
         event_type: Type of event
-        
+
     Returns:
         Dictionary for JSON output (SessionStart) or None for stdout
     """
     if event_type == "SessionStart":
         # For SessionStart, return JSON with suppressOutput
-        return {
-            "suppressOutput": True,
-            "systemMessage": message
-        }
+        return {"suppressOutput": True, "systemMessage": message}
     else:
         # For Stop and Notification, just return the message for stdout
         return None
@@ -457,45 +507,45 @@ if __name__ == "__main__":
     # Test the message generator
     print("Testing Enhanced Message Generator")
     print("=" * 50)
-    
+
     # Test basic functionality
     for event in ["SessionStart", "Stop", "Notification"]:
         print(f"\n{event}:")
-        print(f"  Default (with ollama): {generate_message(event, use_ollama=True)}")
-        print(f"  Default (fallback): {generate_message(event, use_ollama=False)}")
-    
+        print(f"  Default (with LM Studio): {generate_message(event, use_lm_studio=True)}")
+        print(f"  Default (fallback): {generate_message(event, use_lm_studio=False)}")
+
     # Test new API features if available
     if API_FEATURES_AVAILABLE:
         print("\n\nTesting API Integrations:")
         print("-" * 30)
-        
+
         # Test JW daily text
         print("\nJW Daily Text:")
-        msg = generate_message("SessionStart", message_source="jw", use_ollama=False)
-        print(f"  Without ollama: {msg}")
-        msg = generate_message("SessionStart", message_source="jw", use_ollama=True)
-        print(f"  With ollama: {msg}")
-        
+        msg = generate_message("SessionStart", message_source="jw", use_lm_studio=False)
+        print(f"  Without LM Studio: {msg}")
+        msg = generate_message("SessionStart", message_source="jw", use_lm_studio=True)
+        print(f"  With LM Studio: {msg}")
+
         # Test jokes
         print("\nJokes:")
-        msg = generate_message("SessionStart", message_source="joke", use_ollama=False)
-        print(f"  Without ollama: {msg}")
-        msg = generate_message("SessionStart", message_source="joke", use_ollama=True)
-        print(f"  With ollama: {msg}")
-        
+        msg = generate_message("SessionStart", message_source="joke", use_lm_studio=False)
+        print(f"  Without LM Studio: {msg}")
+        msg = generate_message("SessionStart", message_source="joke", use_lm_studio=True)
+        print(f"  With LM Studio: {msg}")
+
         # Test quotes
         print("\nQuotes:")
-        msg = generate_message("SessionStart", message_source="quote", use_ollama=False)
-        print(f"  Without ollama: {msg}")
-        msg = generate_message("SessionStart", message_source="quote", use_ollama=True)
-        print(f"  With ollama: {msg}")
+        msg = generate_message("SessionStart", message_source="quote", use_lm_studio=False)
+        print(f"  Without LM Studio: {msg}")
+        msg = generate_message("SessionStart", message_source="quote", use_lm_studio=True)
+        print(f"  With LM Studio: {msg}")
 
         # Test stoic quotes
         print("\nStoic Quotes:")
-        msg = generate_message("SessionStart", message_source="stoic", use_ollama=False)
-        print(f"  Without ollama: {msg}")
-        msg = generate_message("SessionStart", message_source="stoic", use_ollama=True)
-        print(f"  With ollama: {msg}")
+        msg = generate_message("SessionStart", message_source="stoic", use_lm_studio=False)
+        print(f"  Without LM Studio: {msg}")
+        msg = generate_message("SessionStart", message_source="stoic", use_lm_studio=True)
+        print(f"  With LM Studio: {msg}")
 
         # Test random selection
         print("\n\nRandom source selection (5 samples):")
@@ -504,4 +554,3 @@ if __name__ == "__main__":
             print(f"  {i+1}. {msg}")
     else:
         print("\n\nAPI features not available (dependencies may not be installed)")
-        

@@ -1,7 +1,7 @@
 {
   "mood_lifter_hooks": {
     "enabled": true,
-    "ollama": {
+    "lm_studio": {
       "enabled": true,
       "use_variety": true,
       "preferred_models": [

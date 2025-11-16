@@ -4,17 +4,16 @@ Stoic quotes and wisdom for calmness, self-control, and peace of mind.
 Provides quotes from ancient Stoics and modern interpretations for developers.
 """
 
+import os
 import random
 import subprocess
 import sys
-import os
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from lib.constants import Timeouts
-
 
 # Curated stoic quotes focused on calmness, self-control, peace of mind, and managing anger
 STOIC_QUOTES = [
@@ -22,163 +21,148 @@ STOIC_QUOTES = [
     {
         "text": "You have power over your mind - not outside events. Realize this, and you will find strength.",
         "author": "Marcus Aurelius",
-        "theme": "control"
+        "theme": "control",
     },
     {
         "text": "The best revenge is not to be like your enemy.",
         "author": "Marcus Aurelius",
-        "theme": "anger"
+        "theme": "anger",
     },
     {
         "text": "How much more harmful are the consequences of anger than the causes of it.",
         "author": "Marcus Aurelius",
-        "theme": "anger"
+        "theme": "anger",
     },
     {
         "text": "The happiness of your life depends upon the quality of your thoughts.",
         "author": "Marcus Aurelius",
-        "theme": "peace"
+        "theme": "peace",
     },
     {
         "text": "If you are distressed by anything external, the pain is not due to the thing itself, but to your estimate of it.",
         "author": "Marcus Aurelius",
-        "theme": "peace"
+        "theme": "peace",
     },
     {
         "text": "The impediment to action advances action. What stands in the way becomes the way.",
         "author": "Marcus Aurelius",
-        "theme": "obstacles"
+        "theme": "obstacles",
     },
     {
         "text": "Very little is needed to make a happy life; it is all within yourself, in your way of thinking.",
         "author": "Marcus Aurelius",
-        "theme": "peace"
+        "theme": "peace",
     },
-    {
-        "text": "Confine yourself to the present.",
-        "author": "Marcus Aurelius",
-        "theme": "focus"
-    },
-
+    {"text": "Confine yourself to the present.", "author": "Marcus Aurelius", "theme": "focus"},
     # Epictetus - Discourses and Enchiridion
     {
         "text": "It's not what happens to you, but how you react to it that matters.",
         "author": "Epictetus",
-        "theme": "control"
+        "theme": "control",
     },
     {
         "text": "Any person capable of angering you becomes your master.",
         "author": "Epictetus",
-        "theme": "anger"
+        "theme": "anger",
     },
     {
         "text": "He is a wise man who does not grieve for the things which he has not, but rejoices for those which he has.",
         "author": "Epictetus",
-        "theme": "peace"
+        "theme": "peace",
     },
     {
         "text": "First say to yourself what you would be; and then do what you have to do.",
         "author": "Epictetus",
-        "theme": "discipline"
+        "theme": "discipline",
     },
     {
         "text": "If anyone tells you that a certain person speaks ill of you, do not make excuses, but answer: 'He does not know my other faults, or he would not have mentioned only these.'",
         "author": "Epictetus",
-        "theme": "criticism"
+        "theme": "criticism",
     },
     {
         "text": "Don't seek for everything to happen as you wish it would, but rather wish that everything happens as it actually will—then your life will flow well.",
         "author": "Epictetus",
-        "theme": "acceptance"
+        "theme": "acceptance",
     },
     {
         "text": "No person is free who is not master of himself.",
         "author": "Epictetus",
-        "theme": "control"
+        "theme": "control",
     },
-
     # Seneca - Letters and Essays
-    {
-        "text": "The greatest remedy for anger is delay.",
-        "author": "Seneca",
-        "theme": "anger"
-    },
+    {"text": "The greatest remedy for anger is delay.", "author": "Seneca", "theme": "anger"},
     {
         "text": "We suffer more often in imagination than in reality.",
         "author": "Seneca",
-        "theme": "worry"
+        "theme": "worry",
     },
     {
         "text": "Difficulties strengthen the mind, as labor does the body.",
         "author": "Seneca",
-        "theme": "obstacles"
+        "theme": "obstacles",
     },
     {
         "text": "True happiness is to enjoy the present, without anxious dependence upon the future.",
         "author": "Seneca",
-        "theme": "peace"
+        "theme": "peace",
     },
     {
         "text": "The mind that is anxious about future events is miserable.",
         "author": "Seneca",
-        "theme": "worry"
+        "theme": "worry",
     },
     {
         "text": "If a person doesn't know to which port they sail, no wind is favorable.",
         "author": "Seneca",
-        "theme": "purpose"
+        "theme": "purpose",
     },
     {
         "text": "Hang on to your youthful enthusiasms — you'll be able to use them better when you're older.",
         "author": "Seneca",
-        "theme": "enthusiasm"
+        "theme": "enthusiasm",
     },
     {
         "text": "Every new beginning comes from some other beginning's end.",
         "author": "Seneca",
-        "theme": "change"
+        "theme": "change",
     },
-
     # Additional Stoic Wisdom
-    {
-        "text": "The obstacle is the way.",
-        "author": "Ryan Holiday",
-        "theme": "obstacles"
-    },
+    {"text": "The obstacle is the way.", "author": "Ryan Holiday", "theme": "obstacles"},
     {
         "text": "Waste no more time arguing about what a good person should be. Be one.",
         "author": "Marcus Aurelius",
-        "theme": "action"
+        "theme": "action",
     },
     {
         "text": "When another person makes you suffer, it is because they suffer deeply within themselves.",
         "author": "Thich Nhat Hanh (Stoic-aligned)",
-        "theme": "compassion"
+        "theme": "compassion",
     },
     {
         "text": "Between stimulus and response there is a space. In that space is our power to choose our response.",
         "author": "Viktor Frankl (Stoic-aligned)",
-        "theme": "control"
+        "theme": "control",
     },
     {
         "text": "The tranquility that comes when you stop caring what they say. Or think, or do. Only what you do.",
         "author": "Marcus Aurelius",
-        "theme": "peace"
+        "theme": "peace",
     },
     {
         "text": "Choose not to be harmed — and you won't feel harmed. Don't feel harmed — and you haven't been.",
         "author": "Marcus Aurelius",
-        "theme": "resilience"
+        "theme": "resilience",
     },
     {
         "text": "Anger is an acid that can do more harm to the vessel in which it is stored than to anything on which it is poured.",
         "author": "Mark Twain (Stoic-aligned)",
-        "theme": "anger"
+        "theme": "anger",
     },
     {
         "text": "For every minute you remain angry, you give up sixty seconds of peace of mind.",
         "author": "Ralph Waldo Emerson (Stoic-aligned)",
-        "theme": "anger"
+        "theme": "anger",
     },
 ]
 
@@ -218,10 +202,7 @@ def get_stoic_quote(theme: Optional[str] = None) -> Dict[str, str]:
     else:
         quote = random.choice(STOIC_QUOTES)
 
-    return {
-        "text": quote["text"],
-        "author": quote["author"]
-    }
+    return {"text": quote["text"], "author": quote["author"]}
 
 
 def get_general_stoic_wisdom() -> str:
@@ -234,10 +215,8 @@ def get_general_stoic_wisdom() -> str:
     return random.choice(GENERAL_STOIC_WISDOM)
 
 
-def enhance_stoic_quote_with_ollama(
-    quote: Dict[str, str],
-    event_type: str = "SessionStart",
-    model: str = "llama3.2:latest"
+def enhance_stoic_quote_with_lm_studio(
+    quote: Dict[str, str], event_type: str = "SessionStart", model: str = "llama3.2:latest"
 ) -> str:
     """
     Present stoic quote in a clean, readable format.
@@ -259,18 +238,16 @@ def enhance_stoic_quote_with_ollama(
 
     # Return the quote as-is with a simple emoji
     if len(quote_text) > 100:
-        return f"🧘 \"{quote_text[:97]}...\" - {author}"
+        return f'🧘 "{quote_text[:97]}..." - {author}'
     else:
-        return f"🧘 \"{quote_text}\" - {author}"
+        return f'🧘 "{quote_text}" - {author}'
 
 
 def generate_pure_stoic_wisdom(
-    event_type: str = "SessionStart",
-    theme: Optional[str] = None,
-    model: str = "llama3.2:latest"
+    event_type: str = "SessionStart", theme: Optional[str] = None, model: str = "llama3.2:latest"
 ) -> Optional[str]:
     """
-    Generate original stoic wisdom from scratch using ollama.
+    Generate original stoic wisdom from scratch using LM Studio.
     Raw philosophical wisdom - not developer-specific.
 
     Args:
@@ -308,11 +285,11 @@ Only output the wisdom statement, no metadata or attribution."""
             input=prompt,
             text=True,
             capture_output=True,
-            timeout=Timeouts.OLLAMA_QUICK
+            timeout=Timeouts.OLLAMA_QUICK,
         )
 
         if result.returncode == 0 and result.stdout:
-            message = result.stdout.strip().split('\n')[0].strip()
+            message = result.stdout.strip().split("\n")[0].strip()
             return message
     except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
         pass
@@ -322,17 +299,17 @@ Only output the wisdom statement, no metadata or attribution."""
 
 def generate_stoic_message(
     event_type: str = "SessionStart",
-    use_ollama: bool = True,
+    use_lm_studio: bool = True,
     theme: Optional[str] = None,
     use_general_wisdom: bool = False,
-    pure_generation_ratio: float = 0.4
+    pure_generation_ratio: float = 0.4,
 ) -> str:
     """
     Generate a stoic wisdom message.
 
     Args:
         event_type: Type of event
-        use_ollama: Whether to use ollama (for enhancement or pure generation)
+        use_lm_studio: Whether to use ollama (for enhancement or pure generation)
         theme: Optional theme filter
         use_general_wisdom: If True, use general stoic wisdom statements
         pure_generation_ratio: Ratio of pure LLM generation vs quote-based (0.0-1.0)
@@ -346,8 +323,8 @@ def generate_stoic_message(
         return f"🧘 {wisdom}"
 
     # Decide whether to use pure LLM generation or quote-based approach
-    if use_ollama and random.random() < pure_generation_ratio:
-        # Generate from scratch using ollama
+    if use_lm_studio and random.random() < pure_generation_ratio:
+        # Generate from scratch using LM Studio
         pure_wisdom = generate_pure_stoic_wisdom(event_type, theme)
         if pure_wisdom:
             return pure_wisdom
@@ -356,8 +333,8 @@ def generate_stoic_message(
     # Get a stoic quote
     quote = get_stoic_quote(theme)
 
-    if use_ollama:
-        return enhance_stoic_quote_with_ollama(quote, event_type)
+    if use_lm_studio:
+        return enhance_stoic_quote_with_lm_studio(quote, event_type)
     else:
         # Return formatted quote without ollama
         return f"🧘 \"{quote['text']}\" - {quote['author']}"
@@ -365,13 +342,15 @@ def generate_stoic_message(
 
 def get_fallback_stoic_message() -> str:
     """Get a fallback stoic message when generation fails."""
-    return random.choice([
-        "🧘 Control what you can: your code, your response, your calm.",
-        "💭 The bug will pass. Your composure is permanent.",
-        "🌊 Like water around a rock, flow around obstacles in your code.",
-        "⚖️ Balance your ambition with acceptance of what is.",
-        "🎯 Focus on the present line of code, not yesterday's bugs or tomorrow's deadlines.",
-    ])
+    return random.choice(
+        [
+            "🧘 Control what you can: your code, your response, your calm.",
+            "💭 The bug will pass. Your composure is permanent.",
+            "🌊 Like water around a rock, flow around obstacles in your code.",
+            "⚖️ Balance your ambition with acceptance of what is.",
+            "🎯 Focus on the present line of code, not yesterday's bugs or tomorrow's deadlines.",
+        ]
+    )
 
 
 def test_stoic_quotes():
@@ -402,16 +381,16 @@ def test_stoic_quotes():
 
     # Test message generation
     print("\n\n4. Message Generation:")
-    print("\n   Without ollama:")
-    msg = generate_stoic_message(use_ollama=False)
+    print("\n   Without LM Studio:")
+    msg = generate_stoic_message(use_lm_studio=False)
     print(f"   {msg}")
 
     print("\n   With developer wisdom:")
     msg = generate_stoic_message(use_developer_wisdom=True)
     print(f"   {msg}")
 
-    print("\n   With ollama (quote-based, may take a moment):")
-    msg = generate_stoic_message(use_ollama=True, pure_generation_ratio=0.0)
+    print("\n   With LM Studio (quote-based, may take a moment):")
+    msg = generate_stoic_message(use_lm_studio=True, pure_generation_ratio=0.0)
     print(f"   {msg}")
 
     print("\n   Pure LLM generation (from scratch):")
@@ -423,8 +402,12 @@ def test_stoic_quotes():
 
     print("\n   Mixed approach (40% pure, 60% quote-based) - 5 samples:")
     for i in range(5):
-        msg = generate_stoic_message(use_ollama=True, pure_generation_ratio=0.4)
-        prefix = "[PURE]" if not any(name in msg for name in ['Marcus', 'Epictetus', 'Seneca', 'Ryan', '"']) else "[QUOTE]"
+        msg = generate_stoic_message(use_lm_studio=True, pure_generation_ratio=0.4)
+        prefix = (
+            "[PURE]"
+            if not any(name in msg for name in ["Marcus", "Epictetus", "Seneca", "Ryan", '"'])
+            else "[QUOTE]"
+        )
         print(f"   {i+1}. {prefix} {msg[:65]}...")
 
     # Test fallback
