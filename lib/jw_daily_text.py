@@ -260,7 +260,7 @@ def generate_jw_message(
     Args:
         event_type: Type of event (SessionStart, Stop, Notification)
         time_period: Time period (morning, afternoon, evening)
-        use_lm_studio: Whether to use ollama
+        use_lm_studio: Whether to use LM Studio
 
     Returns:
         Encouraging message or None on error
