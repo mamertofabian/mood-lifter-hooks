@@ -43,6 +43,11 @@ When implementing hook files:
 - Keep messages concise and uplifting
 - Use appropriate emojis to enhance visual appeal without overdoing it
 
+**Documentation Guidelines:**
+- Never use temporal comparisons (e.g., "previously", "used to", "migrated from")
+- Focus on current implementation only - git history handles the rest
+- Remove outdated references when making changes
+
 ## Testing Hooks
 
 To test hooks in Claude Code:
